@@ -1,0 +1,47 @@
+[
+  {
+    "id": "item_001",
+    "name": "Kundan Bridal Necklace Set",
+    "type": "necklace",
+    "metal": "gold",
+    "price": 250000,
+    "url": "https://yourshop.com/products/kundan-bridal-necklace",
+    "keywords": ["kundan", "bridal", "heavy", "choker", "gold", "traditional", "wedding"]
+  },
+  {
+    "id": "item_002",
+    "name": "Diamond Solitaire Ring 1ct",
+    "type": "ring",
+    "metal": "platinum",
+    "price": 120000,
+    "url": "https://yourshop.com/products/diamond-solitaire-ring",
+    "keywords": ["diamond", "solitaire", "engagement", "platinum", "modern"]
+  },
+  {
+    "id": "item_003",
+    "name": "Gold Jhumka Earrings",
+    "type": "earring",
+    "metal": "gold",
+    "price": 45000,
+    "url": "https://yourshop.com/products/gold-jhumka",
+    "keywords": ["jhumka", "gold", "traditional", "daily wear", "ethnic", "dangle"]
+  },
+  {
+    "id": "item_004",
+    "name": "Rose Gold Tennis Bracelet",
+    "type": "bracelet",
+    "metal": "rose gold",
+    "price": 85000,
+    "url": "https://yourshop.com/products/rose-gold-tennis-bracelet",
+    "keywords": ["tennis bracelet", "rose gold", "diamond", "modern", "party"]
+  },
+  {
+    "id": "item_005",
+    "name": "Antique Temple Necklace",
+    "type": "necklace",
+    "metal": "gold",
+    "price": 180000,
+    "url": "https://yourshop.com/products/antique-temple-necklace",
+    "keywords": ["temple", "antique", "south indian", "gold", "traditional"]
+  }
+]
