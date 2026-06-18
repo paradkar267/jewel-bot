@@ -7,7 +7,6 @@
     "start": "node bot.js"
   },
   "dependencies": {
-    "@google/genai": "^0.1.2",
     "@supabase/supabase-js": "^2.43.4",
     "axios": "^1.7.2",
     "body-parser": "^1.20.2",
