@@ -255,8 +255,8 @@ function formatWhatsAppReply(analysis, matchingData) {
 
 // ── Step 4: Send WhatsApp reply ───────
 async function sendWhatsAppReply(to, body, shopPhoneNumberId) {
-  // ⚠️ Force using the ENV variable for testing to avoid 401 errors from invalid DB values!
-  const senderId = process.env.META_PHONE_NUMBER_ID;
+  // Use the shop's dynamic phone number ID, or fallback to default for testing
+  const senderId = shopPhoneNumberId || process.env.META_PHONE_NUMBER_ID;
 
   await axios.post(
     `https://graph.facebook.com/v20.0/${senderId}/messages`,
