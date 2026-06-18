@@ -13,7 +13,7 @@ export default function BulkUploadPage() {
   const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
 
   const handleDownloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Name,Type,Metal,Keywords,MinPrice,MaxPrice,ImageURL,ProductURL\nGold Bangle,bracelet,gold,\"bangle, heavy, wedding\",50000,75000,,https://yourshop.com/gold-bangle\nSilver Anklet,other,silver,\"anklet, traditional\",2000,5000,,https://yourshop.com/silver-anklet";
+    const csvContent = "data:text/csv;charset=utf-8,Name,Type,Metal,PriceINR,PurchaseURL,ImageURL\nGold Bangle,bracelet,gold,50000,https://yourshop.com/gold-bangle,\nSilver Anklet,other,silver,2000,https://yourshop.com/silver-anklet,";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -63,11 +63,11 @@ export default function BulkUploadPage() {
               name: row.Name || 'Unnamed Item',
               type: (row.Type || 'other').toLowerCase(),
               metal: (row.Metal || '').toLowerCase(),
-              keywords: row.Keywords ? row.Keywords.split(',').map((k: string) => k.trim()) : [],
-              price_range_min: parseInt(row.MinPrice) || null,
-              price_range_max: parseInt(row.MaxPrice) || null,
+              keywords: [], // Empty by default
+              price_range_min: parseInt(row.PriceINR) || null,
+              price_range_max: parseInt(row.PriceINR) || null,
               image_url: row.ImageURL || null,
-              url: row.ProductURL || null
+              url: row.PurchaseURL || null
             }));
 
             // 3. Bulk Insert into Supabase
