@@ -63,9 +63,7 @@ export default function BulkUploadPage() {
               name: row.Name || 'Unnamed Item',
               type: (row.Type || 'other').toLowerCase(),
               metal: (row.Metal || '').toLowerCase(),
-              keywords: [], // Empty by default
-              price_range_min: parseInt(row.PriceINR) || null,
-              price_range_max: parseInt(row.PriceINR) || null,
+              price: parseInt(row.PriceINR) || null,
               image_url: row.ImageURL || null,
               url: row.PurchaseURL || null
             }));

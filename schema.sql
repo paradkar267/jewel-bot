@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS products (
   metal TEXT,
   price NUMERIC,
   url TEXT,
-  keywords TEXT[], -- Array of strings for matching
+  image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
