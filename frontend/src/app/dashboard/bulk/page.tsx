@@ -49,15 +49,8 @@ export default function BulkUploadPage() {
         skipEmptyLines: true,
         complete: async (results) => {
           try {
-            // Validate Columns
-            const expectedHeaders = ['Name', 'Type', 'Metal', 'Keywords', 'MinPrice', 'MaxPrice', 'ImageURL', 'ProductURL'];
-            const actualHeaders = results.meta.fields || [];
-            
-            const missingHeaders = expectedHeaders.filter(header => !actualHeaders.includes(header));
-            
-            if (missingHeaders.length > 0) {
-              throw new Error(`Invalid CSV Format. Missing columns: ${missingHeaders.join(', ')}. Please use the exact template.`);
-            }
+            // We no longer strictly validate columns to allow flexible uploads.
+            // Missing columns will gracefully fall back to default/empty values.
 
             if (results.data.length === 0) {
               throw new Error("The CSV file is empty.");
