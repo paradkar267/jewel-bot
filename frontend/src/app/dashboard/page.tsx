@@ -115,7 +115,7 @@ export default function DashboardPage() {
                 <div className="pt-3 border-t border-white/5 flex flex-col">
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium mb-0.5">Est. Value</span>
                   <span className="text-sm font-bold text-amber-400">
-                    {product.price_range_min ? `₹${product.price_range_min.toLocaleString()}` : 'Ask for Price'}
+                    {product.price ? `₹${product.price.toLocaleString()}` : 'Ask for Price'}
                   </span>
                 </div>
               </div>

@@ -122,14 +122,12 @@ export async function POST(req: Request) {
             name: name.replace(' - ' + baseUrl.replace('https://', ''), '').trim(),
             url: prodUrl,
             image_url: image_url,
-            price_range_min: price ? parseInt(price) : null,
-            price_range_max: price ? parseInt(price) : null,
+            price: price ? parseInt(price) : null,
             type: name.toLowerCase().includes('necklace') ? 'necklace' : 
                   name.toLowerCase().includes('ring') ? 'ring' : 
                   name.toLowerCase().includes('earring') ? 'earring' : 'other',
             metal: name.toLowerCase().includes('gold') ? 'gold' : 
-                   name.toLowerCase().includes('silver') ? 'silver' : 'unknown',
-            keywords: name.toLowerCase().split(' ').filter(w => w.length > 3)
+                   name.toLowerCase().includes('silver') ? 'silver' : 'unknown'
           });
         }
       } catch (e) {

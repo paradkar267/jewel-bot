@@ -157,7 +157,7 @@ export default function SyncPage() {
                       <p className="text-xs text-gray-400 mt-1 line-clamp-1">{item.url}</p>
                     </div>
                     <div className="mt-3 font-bold text-amber-400">
-                      {item.price_range_min ? `₹${item.price_range_min.toLocaleString('en-IN')}` : 'Price not found'}
+                      {item.price ? `₹${item.price.toLocaleString('en-IN')}` : 'Price not found'}
                     </div>
                   </div>
                 </div>

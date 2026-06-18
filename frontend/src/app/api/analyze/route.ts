@@ -10,9 +10,7 @@ export async function POST(req: Request) {
       "name": "A short descriptive name (e.g. Elegant Gold Kundan Necklace)",
       "type": "ring | necklace | earring | bracelet | pendant | other",
       "metal": "gold | silver | platinum | unknown",
-      "keywords": ["keyword1", "keyword2", "keyword3"],
-      "price_range_min": 1000,
-      "price_range_max": 50000
+      "price": 10000
     }`;
 
     // Read Gemini API Key from process.env (Server-side only)

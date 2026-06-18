@@ -20,9 +20,7 @@ export default function AddProductPage() {
     name: '',
     type: '',
     metal: '',
-    keywords: '',
-    price_range_min: '',
-    price_range_max: '',
+    price: '',
     url: ''
   });
 
@@ -55,9 +53,7 @@ export default function AddProductPage() {
           name: data.name || '',
           type: data.type || '',
           metal: data.metal || '',
-          keywords: data.keywords ? data.keywords.join(', ') : '',
-          price_range_min: data.price_range_min || '',
-          price_range_max: data.price_range_max || ''
+          price: data.price || ''
         }));
       };
     } catch (error) {
@@ -105,9 +101,7 @@ export default function AddProductPage() {
         name: formData.name,
         type: formData.type,
         metal: formData.metal,
-        keywords: formData.keywords.split(',').map(k => k.trim()),
-        price_range_min: parseInt(formData.price_range_min) || null,
-        price_range_max: parseInt(formData.price_range_max) || null,
+        price: parseInt(formData.price) || null,
         image_url: imageUrl,
         url: formData.url
       };
@@ -268,34 +262,13 @@ export default function AddProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Tags (Comma separated)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Estimated Price (₹)</label>
                 <input 
-                  type="text" 
-                  value={formData.keywords} onChange={e => setFormData({...formData, keywords: e.target.value})}
+                  type="number" 
+                  value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
                   className="block w-full bg-[#0a0a0a] border border-white/10 rounded-lg shadow-sm py-3 px-4 text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm" 
-                  placeholder="bridal, wedding, heavy, 22k" 
+                  placeholder="10000"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Est. Minimum Price (₹)</label>
-                  <input 
-                    type="number" 
-                    value={formData.price_range_min} onChange={e => setFormData({...formData, price_range_min: e.target.value})}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-lg shadow-sm py-3 px-4 text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm" 
-                    placeholder="10000"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Est. Maximum Price (₹)</label>
-                  <input 
-                    type="number" 
-                    value={formData.price_range_max} onChange={e => setFormData({...formData, price_range_max: e.target.value})}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-lg shadow-sm py-3 px-4 text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm" 
-                    placeholder="15000"
-                  />
-                </div>
               </div>
 
               <div>
