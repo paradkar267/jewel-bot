@@ -222,7 +222,7 @@ export default function AddProductPage() {
           <div className="md:w-7/12 flex flex-col justify-center">
             <form onSubmit={handleSave} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Jewelry Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Name</label>
                 <input 
                   type="text" required
                   value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
@@ -233,7 +233,7 @@ export default function AddProductPage() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Category</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Type</label>
                   <select 
                     value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}
                     className="block w-full bg-[#0a0a0a] border border-white/10 rounded-lg shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm appearance-none"
@@ -247,7 +247,7 @@ export default function AddProductPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Metal Base</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Metal</label>
                   <select 
                     value={formData.metal} onChange={e => setFormData({...formData, metal: e.target.value})}
                     className="block w-full bg-[#0a0a0a] border border-white/10 rounded-lg shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm appearance-none"
@@ -262,7 +262,7 @@ export default function AddProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Estimated Price (₹)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">PriceINR</label>
                 <input 
                   type="number" 
                   value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
@@ -272,7 +272,7 @@ export default function AddProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Website Purchase Link (Optional)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">PurchaseURL</label>
                 <input 
                   type="url" 
                   value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})}
