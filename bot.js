@@ -292,12 +292,21 @@ app.post('/webhook', async (req, res) => {
     
     const message = messages[0];
     
-    // Prevent duplicate processing of the same message
+    // Prevent duplicate processing of the same message (in-memory)
     if (processedMessageIds.has(message.id)) {
       console.log(`   [DEBUG] Ignored duplicate message retry: ${message.id}`);
       return;
     }
     processedMessageIds.add(message.id);
+
+    // Prevent processing old messages (fixes Meta retry loops wasting API tokens)
+    if (message.timestamp) {
+      const messageAgeSeconds = Math.floor(Date.now() / 1000) - parseInt(message.timestamp, 10);
+      if (messageAgeSeconds > 120) { // Ignore if message is older than 2 minutes
+        console.log(`   [DEBUG] Ignored old message to prevent retry loop. Age: ${messageAgeSeconds}s`);
+        return;
+      }
+    }
 
     const phone = message.from;
     const receivingNumber = metadata && metadata.display_phone_number ? metadata.display_phone_number : null;
