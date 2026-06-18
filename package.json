@@ -1,0 +1,17 @@
+{
+  "name": "jewel-bot-backend",
+  "version": "1.0.0",
+  "description": "WhatsApp AI Jewelry Bot Backend",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "@google/genai": "^0.1.2",
+    "@supabase/supabase-js": "^2.43.4",
+    "axios": "^1.7.2",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
