@@ -151,7 +151,7 @@ Below is the JSON catalog of our shop:
 ${catalogJson}
 </CATALOG>
 
-Look at the image and the catalog closely. Since the catalog data is sparse (only name, type, metal, and image_url), be lenient. If an item in the catalog reasonably matches the visual characteristics of the image (e.g. type and metal match, and the name/image_url hints at the design), consider it the exact match and set "exact_match_id" to that product's ID.
+Look at the image and the catalog closely. The user might send a screenshot from an Instagram reel, video, or a blurry photo. Do NOT expect studio-quality images. Since the catalog data is sparse (only name, type, metal, and image_url), be highly lenient. If a catalog item reasonably matches the visual design, type, and metal of the jewelry in the screenshot, assume it is the exact match and set "exact_match_id" to that product's ID. Do not ignore a match just because of image angles or blurriness.
 Regardless of whether you find an exact match or not, find up to 2 similar items in the catalog and put their IDs in "suggestion_ids".
 
 {
