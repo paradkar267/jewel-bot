@@ -244,6 +244,43 @@ IMPORTANT: If the image does NOT contain jewelry, set is_jewelry to false and fi
   return JSON.parse(raw);
 }
 
+// ── Step 2.5: Gemini AI Text Catalog Search ───────
+async function searchCatalogWithTextGemini(userQuery, catalog) {
+  const catalogJson = JSON.stringify(catalog, null, 2);
+
+  const prompt = `You are an expert AI jewelry sales assistant. A customer sent this message: "${userQuery}".
+Below is our shop's JSON catalog:
+<CATALOG>
+${catalogJson}
+</CATALOG>
+
+Analyze the customer query for jewelry type (ring, necklace, earring, bracelet, etc.), metal (gold, silver, platinum, etc.), origin style (kundan, polki, antique), and price range (e.g., "under 50k", "below 1 lakh", "budget 20000").
+Return ONLY a valid JSON object matching this schema:
+{
+  "is_search_query": true,
+  "search_summary": "1-sentence description of search criteria (e.g., Gold rings under ₹50,000)",
+  "matching_product_ids": ["array of matching product UUIDs from the catalog, up to 4 items"]
+}
+
+If the user message is general chatter or not looking for jewelry products, set is_search_query to false and matching_product_ids to [].`;
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY missing");
+
+  const response = await axios.post(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json" }
+    },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+
+  let raw = response.data.candidates[0].content.parts[0].text.trim();
+  raw = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  return JSON.parse(raw);
+}
+
 // ── Step 3: Format WhatsApp reply ───────
 function formatWhatsAppReply(analysis, matchingData) {
   if (!analysis.is_jewelry) {
@@ -502,9 +539,55 @@ app.post('/webhook', async (req, res) => {
           session.metaAccessToken
         );
       } else {
+        // ── Gemini AI Text Catalog Search ───────
+        try {
+          const catalog = await fetchShopCatalog(session.shopId);
+          if (catalog && catalog.length > 0) {
+            console.log(`   🔎 Performing AI Text Search for ${phone}: "${textBody}"`);
+            const searchResult = await searchCatalogWithTextGemini(textBody, catalog);
+
+            if (searchResult.is_search_query && searchResult.matching_product_ids && searchResult.matching_product_ids.length > 0) {
+              const matchedProducts = searchResult.matching_product_ids
+                .map(id => catalog.find(p => p.id === id))
+                .filter(Boolean);
+
+              if (matchedProducts.length > 0) {
+                let reply = `🔍 *Search Results for:* _"${textBody}"_\n`;
+                if (searchResult.search_summary) reply += `📋 ${searchResult.search_summary}\n\n`;
+
+                matchedProducts.forEach((item, idx) => {
+                  const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
+                  reply += `${idx + 1}. *${item.name}*\n`;
+                  if (item.metal || item.type) reply += `   🏷️ ${[item.metal, item.type].filter(Boolean).join(' · ')}\n`;
+                  reply += `   💰 *Price:* ${pStr}\n`;
+                  if (item.url) reply += `   🔗 *Buy Link:* ${item.url}\n`;
+                  reply += `\n`;
+                });
+
+                reply += `📸 *Tip:* You can also send us a photo of any design to search using visual AI!`;
+
+                await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
+                console.log(`   ✅ AI Text Search results sent to ${phone} (${matchedProducts.length} items found)`);
+                return;
+              }
+            } else if (searchResult.is_search_query) {
+              await sendWhatsAppReply(
+                phone,
+                `😔 *No matching jewelry found for:* "${textBody}"\n\nTry searching for something like *"Gold Ring"*, *"Silver Bracelet"*, or *"Necklace under 50000"*.\n\n📸 Or send us a photo of the jewelry design!`,
+                session.metaPhoneNumberId,
+                session.metaAccessToken
+              );
+              return;
+            }
+          }
+        } catch (searchErr) {
+          console.error("   ⚠️ Text catalog search error:", searchErr.message);
+        }
+
+        // Fallback response for non-search text queries
         await sendWhatsAppReply(
           phone, 
-          `📸 *Send me a jewelry image to find it in our catalog!*\n\nℹ️ *Daily Search Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n_Note: You can reply STOP at any time to unsubscribe from updates._`, 
+          `📸 *Send me a jewelry image to find it in our catalog!*\n\n💬 *Or type what you are looking for!* (e.g., *"Gold ring under 50,000"*, *"Kundan necklace"*)\n\nℹ️ *Daily Image Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n_Note: You can reply STOP at any time to unsubscribe from updates._`, 
           session.metaPhoneNumberId,
           session.metaAccessToken
         );
