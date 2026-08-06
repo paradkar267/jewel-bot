@@ -18,7 +18,8 @@ export default async function AdminPage() {
   if (!result.success) {
     return (
       <div className="p-8 text-center bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400">
-        Failed to load administrative console.
+        <p className="font-bold text-lg mb-2">Failed to load administrative console</p>
+        <p className="text-xs opacity-80">{result.error}</p>
       </div>
     );
   }

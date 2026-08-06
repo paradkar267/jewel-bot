@@ -15,43 +15,53 @@ async function verifyAdmin() {
 }
 
 export async function getAdminStats() {
-  await verifyAdmin();
+  try {
+    await verifyAdmin();
 
-  const [totalShops, totalProducts, totalLeads, totalCampaigns] = await Promise.all([
-    prisma.shop.count(),
-    prisma.product.count(),
-    prisma.lead.count(),
-    prisma.broadcastCampaign.count()
-  ]);
+    const [totalShops, totalProducts, totalLeads, totalCampaigns] = await Promise.all([
+      prisma.shop.count(),
+      prisma.product.count(),
+      prisma.lead.count(),
+      prisma.broadcastCampaign.count()
+    ]);
 
-  const shops = await prisma.shop.findMany({
-    include: {
-      _count: {
-        select: {
-          products: true,
-          leads: true,
-          broadcasts: true
+    const shops = await prisma.shop.findMany({
+      include: {
+        _count: {
+          select: {
+            products: true,
+            leads: true,
+            broadcasts: true
+          }
         }
-      }
-    },
-    orderBy: { created_at: 'desc' }
-  });
+      },
+      orderBy: { created_at: 'desc' }
+    });
 
-  const serializedShops = shops.map(shop => ({
-    ...shop,
-    created_at: shop.created_at.toISOString()
-  }));
+    const serializedShops = shops.map(shop => ({
+      ...shop,
+      created_at: shop.created_at.toISOString()
+    }));
 
-  return {
-    success: true,
-    stats: {
-      totalShops,
-      totalProducts,
-      totalLeads,
-      totalCampaigns
-    },
-    shops: serializedShops
-  };
+    return {
+      success: true,
+      stats: {
+        totalShops,
+        totalProducts,
+        totalLeads,
+        totalCampaigns
+      },
+      shops: serializedShops
+    };
+  } catch (error: any) {
+    console.error("Error in getAdminStats:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to fetch admin stats",
+      stats: { totalShops: 0, totalProducts: 0, totalLeads: 0, totalCampaigns: 0 },
+      shops: []
+    };
+  }
 }
 
 export async function createShopFromAdmin(data: {
