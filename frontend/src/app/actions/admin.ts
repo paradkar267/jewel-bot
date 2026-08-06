@@ -70,6 +70,7 @@ export async function createShopFromAdmin(data: {
   ownerEmail: string;
   password?: string;
   metaPhoneNumberId?: string;
+  metaAccessToken?: string;
 }) {
   await verifyAdmin();
 
@@ -102,7 +103,8 @@ export async function createShopFromAdmin(data: {
       whatsapp_number: data.whatsappNumber,
       owner_email: data.ownerEmail,
       password: hashedPassword,
-      meta_phone_number_id: data.metaPhoneNumberId || null
+      meta_phone_number_id: data.metaPhoneNumberId || null,
+      meta_access_token: data.metaAccessToken || null
     }
   });
 
@@ -122,6 +124,7 @@ export async function updateShopMeta(
     whatsappNumber: string;
     ownerEmail: string;
     metaPhoneNumberId: string;
+    metaAccessToken?: string;
   }
 ) {
   await verifyAdmin();
@@ -153,7 +156,8 @@ export async function updateShopMeta(
       name: data.name,
       whatsapp_number: data.whatsappNumber,
       owner_email: data.ownerEmail,
-      meta_phone_number_id: data.metaPhoneNumberId || null
+      meta_phone_number_id: data.metaPhoneNumberId || null,
+      meta_access_token: data.metaAccessToken || null
     }
   });
 

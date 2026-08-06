@@ -16,7 +16,7 @@ export async function uploadMetaMedia(formData: FormData): Promise<{ success: bo
 
     const shop = await prisma.shop.findUnique({
       where: { id: shopId },
-      select: { meta_phone_number_id: true }
+      select: { meta_phone_number_id: true, meta_access_token: true }
     });
 
     if (!shop) {
@@ -24,7 +24,7 @@ export async function uploadMetaMedia(formData: FormData): Promise<{ success: bo
     }
 
     const senderId = shop.meta_phone_number_id || process.env.META_PHONE_NUMBER_ID;
-    const accessToken = process.env.META_ACCESS_TOKEN;
+    const accessToken = shop.meta_access_token || process.env.META_ACCESS_TOKEN;
 
     if (!senderId || !accessToken) {
       return { success: false, error: "Meta API configuration is missing. Set META_PHONE_NUMBER_ID and META_ACCESS_TOKEN in Vercel environment variables." };

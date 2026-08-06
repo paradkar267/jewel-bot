@@ -55,7 +55,7 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
     try {
       const data = await prisma.shop.findFirst({
         where: { meta_phone_number_id: metaPhoneNumberId },
-        select: { id: true, name: true, meta_phone_number_id: true }
+        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true }
       });
       if (data) {
         console.log(`   [DEBUG] Found shop by meta_phone_number_id!`);
