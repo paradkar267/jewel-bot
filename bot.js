@@ -12,7 +12,10 @@ app.use(express.json());
 const PORT = process.env.PORT || 3002;
 
 const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
+const pool = new Pool({ 
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
@@ -37,7 +40,10 @@ function getSession(phone) {
       dailyImageCount: 0,
       lastImageDate: new Date().toISOString().slice(0, 10),
       joinedAt: new Date(),
-      shopId: null // We'll store which shop they are talking to
+      shopId: null,
+      shopName: null,
+      metaPhoneNumberId: null,
+      metaAccessToken: null
     });
   }
   const session = sessions.get(phone);
@@ -47,7 +53,7 @@ function getSession(phone) {
 
 // ── Database Queries ───────
 
-// 1. Find shop ID by its WhatsApp number
+// 1. Find shop ID by its WhatsApp number or Meta Phone ID
 async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
   console.log(`   [DEBUG] Looking up shop for phone: ${phone}, meta_id: ${metaPhoneNumberId}`);
   
@@ -68,67 +74,77 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
 
   if (phone) {
     try {
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
       const data = await prisma.shop.findFirst({
-        where: { whatsapp_number: phone },
-        select: { id: true, name: true, meta_phone_number_id: true }
+        where: {
+          whatsapp_number: { contains: cleanPhone }
+        },
+        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true }
       });
       if (data) {
-        console.log(`   [DEBUG] Found shop by whatsapp_number!`);
+        console.log(`   [DEBUG] Found shop by phone number!`);
         return data;
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log(`   [DEBUG] Error looking up by phone:`, error.message);
+    }
   }
 
-  console.log(`   [DEBUG] Shop not found by ID or Phone. Using fallback...`);
-  // Fallback for PoC: If no shop found for the number, get the latest active shop
+  // Fallback: If only 1 shop exists in database, auto-assign it
   try {
-    const fallbackData = await prisma.shop.findFirst({
-      orderBy: { created_at: 'desc' },
-      select: { id: true, name: true, meta_phone_number_id: true }
+    const shops = await prisma.shop.findMany({
+      take: 2,
+      select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true }
     });
-    console.log(`   [DEBUG] Fallback succeeded! Shop:`, fallbackData?.name);
-    return fallbackData;
-  } catch (fallbackError) {
-    console.log(`   [DEBUG] Fallback Error:`, fallbackError.message);
-    return null;
+    if (shops.length === 1) {
+      console.log(`   [DEBUG] Fallback: Auto-assigning single existing shop: ${shops[0].name}`);
+      return shops[0];
+    }
+  } catch (err) {
+    console.log(`   [DEBUG] Fallback shop lookup error:`, err.message);
   }
+
+  return null;
 }
 
-// 2. Fetch all products for the shop
+// 2. Fetch catalog items for a specific shop
 async function fetchShopCatalog(shopId) {
   if (!shopId) return [];
-
   try {
-    const catalog = await prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: { shop_id: shopId },
-      select: { id: true, name: true, type: true, metal: true, price: true, url: true, image_url: true }
+      orderBy: { created_at: 'desc' }
     });
-    console.log(`   [DEBUG] Fetched ${catalog ? catalog.length : 0} products for shop_id: ${shopId}`);
-    return catalog || [];
+    return products.map(p => ({
+      id: p.id,
+      name: p.name,
+      type: p.type,
+      metal: p.metal,
+      price: p.price ? Number(p.price) : null,
+      url: p.url,
+      image_url: p.image_url
+    }));
   } catch (error) {
-    console.log(`   [DEBUG] Prisma Error:`, error.message);
+    console.error("   ❌ Error fetching shop catalog:", error.message);
     return [];
   }
 }
 
-// 3. Track Customer Lead
-async function trackLead(shopId, phone, userName) {
+// 3. Register or update lead in CRM
+async function trackLead(shopId, phone, customerName) {
   if (!shopId || !phone) return;
   try {
-    const existingLead = await prisma.lead.findFirst({
-      where: {
-        shop_id: shopId,
-        customer_phone: phone
-      }
+    const existing = await prisma.lead.findFirst({
+      where: { shop_id: shopId, customer_phone: phone }
     });
-      
-    if (existingLead) {
+
+    if (existing) {
       await prisma.lead.update({
-        where: { id: existingLead.id },
+        where: { id: existing.id },
         data: {
-          customer_name: userName || existingLead.customer_name,
-          message_count: existingLead.message_count + 1,
-          last_contacted_at: new Date()
+          message_count: { increment: 1 },
+          last_contacted_at: new Date(),
+          customer_name: customerName && customerName !== 'there' ? customerName : existing.customer_name
         }
       });
     } else {
@@ -136,22 +152,26 @@ async function trackLead(shopId, phone, userName) {
         data: {
           shop_id: shopId,
           customer_phone: phone,
-          customer_name: userName || null,
+          customer_name: customerName && customerName !== 'there' ? customerName : null,
           message_count: 1,
-          last_contacted_at: new Date()
+          is_active: true
         }
       });
     }
-  } catch (err) {
-    console.error("Failed to track lead:", err.message);
+  } catch (error) {
+    console.error("   ❌ Error tracking lead CRM:", error.message);
   }
 }
 
-
 // ── Step 1: Download image from Meta ───────
-async function downloadImageAsBase64(mediaId) {
+async function downloadImageAsBase64(mediaId, shopAccessToken) {
+  const accessToken = shopAccessToken || process.env.META_ACCESS_TOKEN;
+  if (!accessToken) {
+    throw new Error("Meta Access Token is missing in environment or shop config.");
+  }
+
   const metaUrlResponse = await axios.get(`https://graph.facebook.com/v20.0/${mediaId}`, {
-    headers: { Authorization: `Bearer ${process.env.META_ACCESS_TOKEN}` }
+    headers: { Authorization: `Bearer ${accessToken}` }
   });
   
   const mediaUrl = metaUrlResponse.data.url;
@@ -159,7 +179,7 @@ async function downloadImageAsBase64(mediaId) {
 
   const response = await axios.get(mediaUrl, {
     responseType: 'arraybuffer',
-    headers: { Authorization: `Bearer ${process.env.META_ACCESS_TOKEN}` }
+    headers: { Authorization: `Bearer ${accessToken}` }
   });
 
   const base64 = Buffer.from(response.data, 'binary').toString('base64');
@@ -168,7 +188,6 @@ async function downloadImageAsBase64(mediaId) {
 
 // ── Step 2: Gemini Vision API ───────
 async function analyzeJewelryWithGemini(base64Image, mimeType, catalog) {
-  // We provide the catalog to Gemini so it can directly evaluate the exact match
   const catalogJson = JSON.stringify(catalog, null, 2);
 
   const prompt = `You are an expert jewelry analyst. Analyze this jewelry image and return ONLY a valid JSON object. No markdown, no extra text.
@@ -199,8 +218,13 @@ Regardless of whether you find an exact match or not, find up to 2 similar items
 
 IMPORTANT: If the image does NOT contain jewelry, set is_jewelry to false and fill other fields with null.`;
 
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is missing in server environment variables.");
+  }
+
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
       contents: [{
         parts: [
@@ -233,24 +257,10 @@ function formatWhatsAppReply(analysis, matchingData) {
     pendant: '🔮', anklet: '🦶', bangle: '🔗', other: '✨'
   };
 
-  const metalEmoji = {
-    gold: '🥇', silver: '🥈', platinum: '💎',
-    'rose gold': '🌸', 'white gold': '⚪', other: '⚙️'
-  };
-
   const emoji = typeEmoji[analysis.type] || '✨';
-  const mEmoji = metalEmoji[analysis.metal] || '⚙️';
-  
-  const gems = Array.isArray(analysis.gemstones) && analysis.gemstones.length > 0
-    ? analysis.gemstones.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')
-    : 'None';
-
   const occasion = analysis.occasion
     ? analysis.occasion.charAt(0).toUpperCase() + analysis.occasion.slice(1)
     : '—';
-
-  const origin = analysis.origin_style || 'Contemporary';
-  const purity = analysis.metal_purity ? ` · ${analysis.metal_purity}` : '';
 
   let reply = `${emoji} *Jewelry Details* ${emoji}\n\n`;
   reply += `📝 *Info:* ${analysis.design_details || 'Beautiful jewelry piece.'}\n`;
@@ -268,36 +278,46 @@ function formatWhatsAppReply(analysis, matchingData) {
   }
 
   if (suggestions && suggestions.length > 0) {
-    reply += `🌟 *Similar Suggestions:*\n`;
-    suggestions.forEach(item => {
+    reply += `✨ *Similar Designs You Might Like:*\n`;
+    suggestions.forEach((item, idx) => {
       const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
-      reply += `- *${item.name}* (${pStr})\n`;
-      reply += `  🔗 ${item.url}\n`;
+      reply += `${idx + 1}. *${item.name}* — ${pStr}\n   🔗 ${item.url}\n`;
     });
   }
 
-  return reply.trim();
+  return reply;
 }
 
 // ── Step 4: Send WhatsApp reply ───────
-async function sendWhatsAppReply(to, body, shopPhoneNumberId) {
-  // Use the shop's dynamic phone number ID, or fallback to default for testing
+async function sendWhatsAppReply(to, body, shopPhoneNumberId, shopAccessToken) {
   const senderId = shopPhoneNumberId || process.env.META_PHONE_NUMBER_ID;
+  const accessToken = shopAccessToken || process.env.META_ACCESS_TOKEN;
 
-  await axios.post(
-    `https://graph.facebook.com/v20.0/${senderId}/messages`,
-    {
-      messaging_product: "whatsapp",
-      to: to,
-      text: { body }
-    },
-    {
-      headers: {
-        'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
+  if (!senderId || !accessToken) {
+    console.error(`   ❌ Cannot send reply to ${to}: META_PHONE_NUMBER_ID or META_ACCESS_TOKEN is missing!`);
+    return;
+  }
+
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v20.0/${senderId}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: to,
+        text: { body }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
       }
-    }
-  );
+    );
+    console.log(`   ✅ WhatsApp reply sent to ${to}`);
+  } catch (err) {
+    const errorDetails = err.response ? JSON.stringify(err.response.data) : err.message;
+    console.error(`   ❌ Failed to send WhatsApp reply to ${to}:`, errorDetails);
+  }
 }
 
 const processedMessageIds = new Set();
@@ -312,23 +332,23 @@ app.post('/webhook', async (req, res) => {
 
     const value = entry[0].changes[0].value;
     const messages = value.messages;
-    const metadata = value.metadata; // Contains the receiving phone number
+    const metadata = value.metadata;
 
     if (!messages || !messages[0]) return;
     
     const message = messages[0];
     
-    // Prevent duplicate processing of the same message (in-memory)
+    // Prevent duplicate processing of the same message
     if (processedMessageIds.has(message.id)) {
       console.log(`   [DEBUG] Ignored duplicate message retry: ${message.id}`);
       return;
     }
     processedMessageIds.add(message.id);
 
-    // Prevent processing old messages (fixes Meta retry loops wasting API tokens)
+    // Prevent processing old messages (older than 2 minutes)
     if (message.timestamp) {
       const messageAgeSeconds = Math.floor(Date.now() / 1000) - parseInt(message.timestamp, 10);
-      if (messageAgeSeconds > 120) { // Ignore if message is older than 2 minutes
+      if (messageAgeSeconds > 120) {
         console.log(`   [DEBUG] Ignored old message to prevent retry loop. Age: ${messageAgeSeconds}s`);
         return;
       }
@@ -338,7 +358,7 @@ app.post('/webhook', async (req, res) => {
     const receivingNumber = metadata && metadata.display_phone_number ? metadata.display_phone_number : null;
     const metaPhoneNumberId = metadata && metadata.phone_number_id ? metadata.phone_number_id : null;
     const userName = value.contacts && value.contacts[0] ? value.contacts[0].profile.name : 'there';
-    
+
     let textBody = '';
     if (message.type === 'text') {
       textBody = message.text.body;
@@ -348,16 +368,17 @@ app.post('/webhook', async (req, res) => {
     const mediaId = hasImage ? message.image.id : null;
 
     const session = getSession(phone);
-    console.log(`\n📩 Message from ${phone} (${userName})`);
+    console.log(`\n📩 Message from ${phone} (${userName}): "${textBody || (hasImage ? '[IMAGE]' : message.type)}"`);
     session.messageCount++;
 
-    // Resolve which shop this is
+    // Resolve which shop this is (retry lookup if null)
     if (!session.shopId) {
       const shop = await getShopByPhoneNumber(receivingNumber, metaPhoneNumberId);
       if (shop) {
         session.shopId = shop.id;
         session.shopName = shop.name;
         session.metaPhoneNumberId = shop.meta_phone_number_id;
+        session.metaAccessToken = shop.meta_access_token;
         console.log(`   🛒 Assigned to shop: ${shop.name}`);
       } else {
         console.log(`   ❌ FAILED to assign shop! session.shopId is NULL`);
@@ -367,15 +388,6 @@ app.post('/webhook', async (req, res) => {
     // Track the lead CRM
     if (session.shopId) {
       await trackLead(session.shopId, phone, userName);
-      
-      // Send Greeting if it's the very first message
-      if (session.messageCount === 1) {
-        await sendWhatsAppReply(
-          phone, 
-          `👋 Hello ${userName}!\n\nWelcome to *${session.shopName}*. 💎\n\nI am your AI Jewelry Assistant. Send me a photo of any jewelry design, and I will find it in our catalog for you! ✨\n\nℹ️ *Daily Limit:* Aap daily maximum *5 images* search ke liye bhej sakte hain.`, 
-          session.metaPhoneNumberId
-        );
-      }
     }
 
     if (hasImage) {
@@ -385,36 +397,36 @@ app.post('/webhook', async (req, res) => {
         await sendWhatsAppReply(
           phone,
           `⚠️ *Daily Limit Reached! (5/5 Images)*\n\nAapki aaj ki *5 images* ki daily search limit poori ho chuki hai. 🛑\n\nKripya kal (tomorrow) naye jewelry designs search karne ke liye dobara image bheinjein! ✨\n\n_Note: Har user ke liye daily 5 images ki limit hai taaki hamara system fast kaam kare aur API waste na ho._`,
-          session.metaPhoneNumberId
+          session.metaPhoneNumberId,
+          session.metaAccessToken
         );
         return;
       }
 
       session.dailyImageCount++;
-      const remainingImages = MAX_DAILY_IMAGES - session.dailyImageCount;
+      session.state = 'analyzing';
+
+      console.log(`   🔍 Analyzing image for ${phone} (Image ${session.dailyImageCount}/${MAX_DAILY_IMAGES})...`);
 
       await sendWhatsAppReply(
-        phone, 
-        `🔍 *Analyzing your jewelry...*\n\nPlease wait a moment while I search our catalog. ✨\n\n📊 _(Today's Limit: ${session.dailyImageCount}/${MAX_DAILY_IMAGES} used, ${remainingImages} left for today)_`, 
-        session.metaPhoneNumberId
+        phone,
+        `🔍 *Analyzing your jewelry...*\n\nPlease wait a moment while I search our catalog. ✨\n\n📊 *(Today's Limit: ${session.dailyImageCount}/${MAX_DAILY_IMAGES} used, ${MAX_DAILY_IMAGES - session.dailyImageCount} left for today)*`,
+        session.metaPhoneNumberId,
+        session.metaAccessToken
       );
 
-      session.state = 'analyzing';
       try {
-        console.log(`   Downloading image...`);
-        const { base64, contentType } = await downloadImageAsBase64(mediaId);
-
-        console.log(`   Analyzing with Gemini & matching catalog in Database...`);
-        
+        const { base64, contentType } = await downloadImageAsBase64(mediaId, session.metaAccessToken);
         const catalog = await fetchShopCatalog(session.shopId);
+        
+        console.log(`   📦 Catalog loaded: ${catalog.length} items for shop ${session.shopName || session.shopId}`);
+
         const analysis = await analyzeJewelryWithGemini(base64, contentType, catalog);
         console.log(`   [DEBUG] Gemini Analysis:`, JSON.stringify(analysis, null, 2));
 
-        // Build matchingData from Gemini's IDs
         const exactMatch = analysis.exact_match_id ? catalog.find(item => item.id === analysis.exact_match_id) : null;
         let suggestions = (analysis.suggestion_ids || []).map(id => catalog.find(item => item.id === id)).filter(Boolean);
         
-        // Prevent showing the exact match in the suggestions list again
         if (analysis.exact_match_id) {
           suggestions = suggestions.filter(item => item.id !== analysis.exact_match_id);
         }
@@ -425,8 +437,8 @@ app.post('/webhook', async (req, res) => {
         session.state = 'idle';
 
         const replyMessage = formatWhatsAppReply(analysis, matchingData);
-        await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId);
-        console.log(`   ✅ Reply sent to ${phone}`);
+        await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId, session.metaAccessToken);
+        console.log(`   ✅ Analysis reply sent to ${phone}`);
       } catch (err) {
         const errorDetails = err.response ? JSON.stringify(err.response.data) : err.message;
         console.error("   ❌ Error during image processing:", errorDetails);
@@ -434,7 +446,8 @@ app.post('/webhook', async (req, res) => {
         await sendWhatsAppReply(
           phone,
           `❌ *Sorry!* We could not process your image at this moment. Please try sending it again.`,
-          session.metaPhoneNumberId
+          session.metaPhoneNumberId,
+          session.metaAccessToken
         );
       }
 
@@ -450,7 +463,8 @@ app.post('/webhook', async (req, res) => {
             });
             await sendWhatsAppReply(phone,
               `⛔ *You have been unsubscribed.*\n\nYou will no longer receive catalog updates or broadcast messages from us. You can reply *START* at any time to resubscribe.`,
-              session.metaPhoneNumberId
+              session.metaPhoneNumberId,
+              session.metaAccessToken
             );
             console.log(`   ⛔ Unsubscribed customer: ${phone}`);
           } catch (err) {
@@ -466,34 +480,41 @@ app.post('/webhook', async (req, res) => {
             });
             await sendWhatsAppReply(phone,
               `✅ *Welcome back!*\n\nYou have successfully resubscribed to updates from *${session.shopName || 'our shop'}*.\n\n📸 Send me a jewelry image anytime to find it in our catalog!`,
-              session.metaPhoneNumberId
+              session.metaPhoneNumberId,
+              session.metaAccessToken
             );
             console.log(`   ✅ Subscribed customer: ${phone}`);
           } catch (err) {
             console.error("Error resubscribing lead:", err.message);
           }
         }
-      } else if (['hi', 'hello', 'hey'].some(g => text.includes(g))) {
+      } else if (['hi', 'hello', 'hey', 'he'].some(g => text === g || text.startsWith(g + ' ') || text.endsWith(' ' + g))) {
         await sendWhatsAppReply(phone,
           `👋 *Welcome ${session.shopName ? 'to ' + session.shopName : ''}, ${userName}!*\n\n` +
           `Looking for a specific jewelry piece? Just send us a photo!\n\n` +
           `Our AI will instantly find the exact or similar piece from our catalog and share the price and purchase link.\n\n` +
           `📸 *Send an image to get started!*\n` +
           `ℹ️ *Daily Search Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n` +
-          `_Note: Reply STOP at any time to unsubscribe from broadcast updates._`, session.metaPhoneNumberId
+          `_Note: Reply STOP at any time to unsubscribe from broadcast updates._`,
+          session.metaPhoneNumberId,
+          session.metaAccessToken
         );
       } else {
-        await sendWhatsAppReply(phone, `📸 *Send me a jewelry image to find it in our catalog!*\n\nℹ️ *Daily Search Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n_Note: You can reply STOP at any time to unsubscribe from updates._`, session.metaPhoneNumberId);
+        await sendWhatsAppReply(
+          phone, 
+          `📸 *Send me a jewelry image to find it in our catalog!*\n\nℹ️ *Daily Search Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n_Note: You can reply STOP at any time to unsubscribe from updates._`, 
+          session.metaPhoneNumberId,
+          session.metaAccessToken
+        );
       }
     }
   } catch (err) {
-    console.error('Error:', err.message);
+    console.error('Error in webhook handler:', err.message);
   }
 });
 
 // ── Health & Webhook Verification ───────
 app.get('/health', async (req, res) => {
-  // Test DB connection
   try {
     const count = await prisma.shop.count();
     res.json({ status: 'ok', database_connected: true, count });
