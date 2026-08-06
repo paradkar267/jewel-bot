@@ -403,10 +403,9 @@ app.post('/webhook', async (req, res) => {
         return;
       }
 
-      session.dailyImageCount++;
       session.state = 'analyzing';
 
-      console.log(`   🔍 Analyzing image for ${phone} (Image ${session.dailyImageCount}/${MAX_DAILY_IMAGES})...`);
+      console.log(`   🔍 Analyzing image for ${phone} (Completed Scans Today: ${session.dailyImageCount}/${MAX_DAILY_IMAGES})...`);
 
       await sendWhatsAppReply(
         phone,
@@ -436,16 +435,19 @@ app.post('/webhook', async (req, res) => {
         session.lastAnalysis = analysis;
         session.state = 'idle';
 
+        // Increment count ONLY AFTER successful analysis
+        session.dailyImageCount++;
+
         const replyMessage = formatWhatsAppReply(analysis, matchingData);
         await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId, session.metaAccessToken);
-        console.log(`   ✅ Analysis reply sent to ${phone}`);
+        console.log(`   ✅ Analysis reply sent to ${phone} (Updated Count: ${session.dailyImageCount}/${MAX_DAILY_IMAGES})`);
       } catch (err) {
         const errorDetails = err.response ? JSON.stringify(err.response.data) : err.message;
-        console.error("   ❌ Error during image processing:", errorDetails);
+        console.error("   ❌ Error during image processing (Daily limit NOT deducted):", errorDetails);
         session.state = 'idle';
         await sendWhatsAppReply(
           phone,
-          `❌ *Sorry!* We could not process your image at this moment. Please try sending it again.`,
+          `❌ *Sorry!* We could not process your image at this moment. Please try sending it again.\n\n_Note: Aapka daily search limit count deduct nahi hua hai!_`,
           session.metaPhoneNumberId,
           session.metaAccessToken
         );
