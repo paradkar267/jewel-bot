@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { Store, Sparkles } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import { Store, Sparkles, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [shopName, setShopName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [metaPhoneId, setMetaPhoneId] = useState('');
@@ -25,34 +26,50 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         // --- LOGIN FLOW ---
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const result = await signIn('credentials', {
+          redirect: false,
           email,
           password,
         });
-        if (error) throw error;
-        if (data.session) router.push('/dashboard');
+
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+
+        router.push('/dashboard');
+        router.refresh();
       } else {
         // --- SIGNUP FLOW ---
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            shopName,
+            whatsappNumber,
+            metaPhoneId
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        // Auto-login after signup
+        const signInResult = await signIn('credentials', {
+          redirect: false,
           email,
           password,
         });
-        
-        if (authError) throw authError;
 
-        if (authData.user) {
-          // Add shop to database
-          const { error: dbError } = await supabase.from('shops').insert([{
-            name: shopName,
-            owner_email: email,
-            owner_id: authData.user.id,
-            whatsapp_number: whatsappNumber,
-            meta_phone_number_id: metaPhoneId ? metaPhoneId : null
-          }]);
-          
-          if (dbError) throw dbError;
-          router.push('/dashboard');
+        if (signInResult?.error) {
+          throw new Error(signInResult.error);
         }
+
+        router.push('/dashboard');
+        router.refresh();
       }
     } catch (err: any) {
       setError(err.message);
@@ -138,12 +155,21 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300">Secret Vault Key (Password)</label>
-              <input
-                type="password" required
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full bg-[#0a0a0a] border border-white/10 rounded-lg shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors"
-                placeholder="••••••••"
-              />
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? 'text' : 'password'} required
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-lg shadow-sm py-2 pl-3 pr-10 text-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
 
             <div>

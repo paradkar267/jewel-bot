@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { Upload, FileSpreadsheet, Download, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Papa from 'papaparse';
+import { createBulkProducts } from '@/app/actions/bulkProduct';
 
 export default function BulkUploadPage() {
   const router = useRouter();
@@ -36,47 +36,24 @@ export default function BulkUploadPage() {
     setStatus({ type: 'idle', message: 'Parsing CSV...' });
 
     try {
-      // 1. Get current user's shop ID
-      const { data: shopData, error: shopError } = await supabase.from('shops').select('id').limit(1).single();
-      if (shopError || !shopData) {
-        throw new Error("Could not find your shop account. Please contact support.");
-      }
-      const shopId = shopData.id;
-
-      // 2. Parse CSV
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: async (results) => {
           try {
-            // We no longer strictly validate columns to allow flexible uploads.
-            // Missing columns will gracefully fall back to default/empty values.
-
             if (results.data.length === 0) {
               throw new Error("The CSV file is empty.");
             }
 
             setStatus({ type: 'idle', message: `Validated columns. Uploading ${results.data.length} items to vault...` });
             
-            const rowsToInsert = results.data.map((row: any) => ({
-              shop_id: shopId,
-              name: row.Name || 'Unnamed Item',
-              type: (row.Type || 'other').toLowerCase(),
-              metal: (row.Metal || '').toLowerCase(),
-              price: parseInt(row.PriceINR) || null,
-              image_url: row.ImageURL || null,
-              url: row.PurchaseURL || null
-            }));
-
-            // 3. Bulk Insert into Supabase
-            const { error: insertError } = await supabase.from('products').insert(rowsToInsert);
+            const result = await createBulkProducts(results.data);
             
-            if (insertError) throw insertError;
+            if (!result.success) throw new Error("Failed to insert products");
 
-            setStatus({ type: 'success', message: `Successfully added ${rowsToInsert.length} items to your vault!` });
+            setStatus({ type: 'success', message: `Successfully added ${result.count} items to your vault!` });
             setFile(null);
             
-            // Redirect after 2 seconds
             setTimeout(() => {
               router.push('/dashboard');
             }, 2000);

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { Upload, Sparkles, Loader2, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
@@ -68,47 +67,31 @@ export default function AddProductPage() {
     setIsSaving(true);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) throw new Error("Not authenticated");
-
-      let imageUrl = null;
+      let imageBase64 = null;
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('catalog-images')
-          .upload(fileName, imageFile);
-          
-        if (uploadError) {
-          console.error("Storage upload error:", uploadError);
-          throw new Error("Failed to upload image. Have you created the 'catalog-images' storage bucket in Supabase?");
-        }
-          
-        if (uploadData) {
-          const { data: { publicUrl } } = supabase.storage.from('catalog-images').getPublicUrl(uploadData.path);
-          imageUrl = publicUrl;
-        }
+        // Convert file to base64 Data URI
+        const reader = new FileReader();
+        imageBase64 = await new Promise<string>((resolve, reject) => {
+          reader.readAsDataURL(imageFile);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (error) => reject(error);
+        });
       }
 
-      const { data: shopData, error: shopError } = await supabase.from('shops').select('id').limit(1).single();
+      const { createProduct } = await import('@/app/actions/product');
       
-      if (shopError || !shopData) {
-        throw new Error("Could not find your shop account. Please contact support.");
-      }
-
-      const newProduct = {
-        shop_id: shopData.id,
+      const result = await createProduct({
         name: formData.name,
         type: formData.type,
         metal: formData.metal,
         price: parseInt(formData.price) || null,
-        image_url: imageUrl,
-        url: formData.url
-      };
+        url: formData.url,
+        image_base64: imageBase64,
+      });
 
-      const { error } = await supabase.from('products').insert([newProduct]);
-      
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error("Failed to save product");
+      }
 
       router.push('/dashboard');
     } catch (error: any) {

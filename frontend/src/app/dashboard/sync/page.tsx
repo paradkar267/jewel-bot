@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { Globe, Download, Loader2, CheckCircle, AlertCircle, Database } from 'lucide-react';
+import { createSyncProducts } from '@/app/actions/syncProduct';
 
 export default function SyncPage() {
   const router = useRouter();
@@ -47,18 +47,11 @@ export default function SyncPage() {
     setStatus({ type: 'idle', message: 'Saving products to your vault...' });
 
     try {
-      const { data: shopData, error: shopError } = await supabase.from('shops').select('id').limit(1).single();
-      if (shopError || !shopData) throw new Error("Could not find your shop account.");
+      const result = await createSyncProducts(scrapedData);
+      
+      if (!result.success) throw new Error("Failed to save products.");
 
-      const rowsToInsert = scrapedData.map(product => ({
-        shop_id: shopData.id,
-        ...product
-      }));
-
-      const { error: insertError } = await supabase.from('products').insert(rowsToInsert);
-      if (insertError) throw insertError;
-
-      setStatus({ type: 'success', message: `Successfully saved ${rowsToInsert.length} products to your vault!` });
+      setStatus({ type: 'success', message: `Successfully saved ${result.count} products to your vault!` });
       setTimeout(() => router.push('/dashboard'), 2000);
     } catch (err: any) {
       setStatus({ type: 'error', message: err.message });

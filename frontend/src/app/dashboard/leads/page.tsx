@@ -1,46 +1,23 @@
-'use client';
+import { Users, MessageSquare, Calendar, Phone, MessageCircle } from 'lucide-react';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from '@/lib/prisma';
+import { redirect } from "next/navigation";
+import BroadcastModal from '@/components/BroadcastModal';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Users, MessageSquare, Calendar, Phone } from 'lucide-react';
+export default async function LeadsPage() {
+  const session = await getServerSession(authOptions);
 
-export default function LeadsPage() {
-  const [leads, setLeads] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  if (!session || !session.user || !(session.user as any).id) {
+    redirect('/login');
+  }
 
-  useEffect(() => {
-    fetchLeads();
-  }, []);
+  const shopId = (session.user as any).id;
 
-  const fetchLeads = async () => {
-    setLoading(true);
-    // Get current user
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
-      setLoading(false);
-      return;
-    }
-
-    // Get shop ID for this user
-    const { data: shop } = await supabase
-      .from('shops')
-      .select('id')
-      .eq('owner_id', userData.user.id)
-      .single();
-
-    if (shop) {
-      // Fetch leads for this shop
-      const { data } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('shop_id', shop.id)
-        .order('last_contacted_at', { ascending: false });
-      
-      if (data) setLeads(data);
-    }
-    
-    setLoading(false);
-  };
+  const leads = await prisma.lead.findMany({
+    where: { shop_id: shopId },
+    orderBy: { last_contacted_at: 'desc' },
+  });
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -49,12 +26,11 @@ export default function LeadsPage() {
           <h1 className="text-3xl font-extrabold text-white tracking-tight">My Customers</h1>
           <p className="text-gray-400 mt-1">People who have interacted with your bot</p>
         </div>
+        <BroadcastModal customerCount={leads.length} />
       </div>
 
       <div className="bg-[#111111]/80 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/5 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500 animate-pulse">Loading customers...</div>
-        ) : leads.length === 0 ? (
+        {leads.length === 0 ? (
           <div className="text-center py-20 px-4">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 mb-4 shadow-inner">
               <Users className="h-8 w-8 text-gray-500" />
@@ -73,10 +49,16 @@ export default function LeadsPage() {
                     Customer Phone
                   </th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Total Interactions
                   </th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Last Active
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -88,6 +70,17 @@ export default function LeadsPage() {
                         <Phone className="h-4 w-4 text-amber-500 mr-3" />
                         <span className="text-sm font-medium text-white">{lead.customer_phone}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {lead.is_active ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20" title="This customer blocked your number or has an invalid number. Broadcasts will bypass them.">
+                          Blocked / Inactive
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -102,6 +95,17 @@ export default function LeadsPage() {
                           {new Date(lead.last_contacted_at).toLocaleDateString()} at {new Date(lead.last_contacted_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <a
+                        href={`https://wa.me/${lead.customer_phone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-1.5 border border-emerald-500/30 rounded-lg text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500 hover:text-[#0a0a0a] hover:border-transparent transition-all shadow-[0_0_10px_rgba(16,185,129,0.1)]"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
+                        Chat on WhatsApp
+                      </a>
                     </td>
                   </tr>
                 ))}
