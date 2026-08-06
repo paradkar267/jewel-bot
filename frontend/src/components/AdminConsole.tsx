@@ -14,6 +14,7 @@ interface ShopWithCounts {
   whatsapp_number: string | null;
   owner_email: string | null;
   meta_phone_number_id: string | null;
+  meta_access_token?: string | null;
   created_at: string;
   _count: {
     products: number;
@@ -54,14 +55,16 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
     whatsappNumber: '',
     ownerEmail: '',
     password: '',
-    metaPhoneNumberId: ''
+    metaPhoneNumberId: '',
+    metaAccessToken: ''
   });
 
   const [editForm, setEditForm] = useState({
     name: '',
     whatsappNumber: '',
     ownerEmail: '',
-    metaPhoneNumberId: ''
+    metaPhoneNumberId: '',
+    metaAccessToken: ''
   });
 
   // Filtered Shops
@@ -94,12 +97,14 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
         whatsappNumber: addForm.whatsappNumber,
         ownerEmail: addForm.ownerEmail,
         password: addForm.password || undefined,
-        metaPhoneNumberId: addForm.metaPhoneNumberId || undefined
+        metaPhoneNumberId: addForm.metaPhoneNumberId || undefined,
+        metaAccessToken: addForm.metaAccessToken || undefined
       });
 
       if (result.success && result.shop) {
         const newShop: ShopWithCounts = {
           ...result.shop,
+          meta_access_token: (result.shop as any).meta_access_token || null,
           _count: { products: 0, leads: 0, broadcasts: 0 }
         };
         setShops(prev => [newShop, ...prev]);
@@ -109,7 +114,8 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
           whatsappNumber: '',
           ownerEmail: '',
           password: '',
-          metaPhoneNumberId: ''
+          metaPhoneNumberId: '',
+          metaAccessToken: ''
         });
         setIsAddModalOpen(false);
       }
@@ -127,7 +133,8 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
       name: shop.name,
       whatsappNumber: shop.whatsapp_number || '',
       ownerEmail: shop.owner_email || '',
-      metaPhoneNumberId: shop.meta_phone_number_id || ''
+      metaPhoneNumberId: shop.meta_phone_number_id || '',
+      metaAccessToken: (shop as any).meta_access_token || ''
     });
     setError('');
     setSuccess('');
@@ -151,7 +158,8 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
         name: editForm.name,
         whatsappNumber: editForm.whatsappNumber,
         ownerEmail: editForm.ownerEmail,
-        metaPhoneNumberId: editForm.metaPhoneNumberId
+        metaPhoneNumberId: editForm.metaPhoneNumberId,
+        metaAccessToken: editForm.metaAccessToken
       });
 
       if (result.success && result.shop) {
@@ -160,7 +168,8 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
           name: result.shop.name,
           whatsapp_number: result.shop.whatsapp_number,
           owner_email: result.shop.owner_email,
-          meta_phone_number_id: result.shop.meta_phone_number_id
+          meta_phone_number_id: result.shop.meta_phone_number_id,
+          meta_access_token: (result.shop as any).meta_access_token || null
         } : s));
         setSuccess(`Updated details for "${editForm.name}" successfully.`);
         setEditingShop(null);
@@ -504,16 +513,29 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Meta Phone Number ID (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 1094827409283"
-                  value={addForm.metaPhoneNumberId}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, metaPhoneNumberId: e.target.value }))}
-                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-mono"
-                  disabled={isSaving}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Meta Phone Number ID</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1094827409283"
+                    value={addForm.metaPhoneNumberId}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, metaPhoneNumberId: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-mono"
+                    disabled={isSaving}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Meta Access Token</label>
+                  <input
+                    type="password"
+                    placeholder="EAAjchida9b..."
+                    value={addForm.metaAccessToken}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, metaAccessToken: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-mono"
+                    disabled={isSaving}
+                  />
+                </div>
               </div>
 
               <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
@@ -603,18 +625,31 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Meta Phone Number ID</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 1094827409283"
-                  value={editForm.metaPhoneNumberId}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, metaPhoneNumberId: e.target.value }))}
-                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-mono"
-                  disabled={isSaving}
-                />
-                <span className="text-[10px] text-gray-500 mt-1 block">Specify the Meta ID required to hook up this brand's WhatsApp Cloud API broadcasts.</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Meta Phone Number ID</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1094827409283"
+                    value={editForm.metaPhoneNumberId}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, metaPhoneNumberId: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-mono"
+                    disabled={isSaving}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Meta Access Token</label>
+                  <input
+                    type="password"
+                    placeholder="EAAjchida9b..."
+                    value={editForm.metaAccessToken}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, metaAccessToken: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-mono"
+                    disabled={isSaving}
+                  />
+                </div>
               </div>
+              <span className="text-[10px] text-gray-500 mt-1 block">Specify the Meta ID & Token required for this brand's WhatsApp Cloud API.</span>
 
               <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
                 <button
