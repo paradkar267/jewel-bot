@@ -13,31 +13,36 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or password");
+          return null;
         }
 
-        const shop = await prisma.shop.findUnique({
-          where: { owner_email: credentials.email },
-        });
+        try {
+          const shop = await prisma.shop.findUnique({
+            where: { owner_email: credentials.email },
+          });
 
-        if (!shop || !shop.password) {
-          throw new Error("Invalid email or password");
+          if (!shop || !shop.password) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            shop.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: shop.id,
+            name: shop.name,
+            email: shop.owner_email,
+          };
+        } catch (error) {
+          console.error("NextAuth authorize DB error:", error);
+          return null;
         }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          shop.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid email or password");
-        }
-
-        return {
-          id: shop.id,
-          name: shop.name,
-          email: shop.owner_email,
-        };
       },
     }),
   ],
