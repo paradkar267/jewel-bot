@@ -46,6 +46,9 @@ export default async function LeadsPage() {
               <thead className="bg-[#0a0a0a]">
                 <tr>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Customer Name
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Customer Phone
                   </th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -67,8 +70,18 @@ export default async function LeadsPage() {
                   <tr key={lead.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
+                        <div className="h-8 w-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center font-bold text-amber-400 text-xs mr-3">
+                          {(lead.customer_name || 'C')[0].toUpperCase()}
+                        </div>
+                        <span className="text-sm font-semibold text-white">
+                          {lead.customer_name || 'WhatsApp Customer'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
                         <Phone className="h-4 w-4 text-amber-500 mr-3" />
-                        <span className="text-sm font-medium text-white">{lead.customer_phone}</span>
+                        <span className="text-sm font-medium text-gray-300">+{lead.customer_phone}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
