@@ -4,6 +4,8 @@
   "description": "WhatsApp AI Jewelry Bot Backend",
   "main": "bot.js",
   "scripts": {
+    "build": "prisma generate",
+    "postinstall": "prisma generate",
     "start": "node bot.js"
   },
   "dependencies": {
