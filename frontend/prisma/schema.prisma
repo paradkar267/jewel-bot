@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Shop {
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String
+  whatsapp_number      String?   @unique
+  owner_email          String?   @unique
+  password             String?   // Hashed password for NextAuth
+  meta_phone_number_id String?
+  created_at           DateTime  @default(now())
+
+  products             Product[]
+  leads                Lead[]
+  broadcasts           BroadcastCampaign[]
+
+  @@map("shops")
+}
+
+model Product {
+  id         String   @id @default(uuid()) @db.Uuid
+  shop_id    String   @db.Uuid
+  name       String
+  type       String?
+  metal      String?
+  price      Decimal?
+  url        String?
+  image_url  String?
+  created_at DateTime @default(now())
+
+  shop       Shop     @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+
+  @@map("products")
+}
+
+model Lead {
+  id                String   @id @default(uuid()) @db.Uuid
+  shop_id           String   @db.Uuid
+  customer_phone    String
+  customer_name     String?
+  message_count     Int      @default(1)
+  is_active         Boolean  @default(true)
+  last_contacted_at DateTime @default(now())
+  created_at        DateTime @default(now())
+
+  shop              Shop     @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+
+  @@unique([shop_id, customer_phone])
+  @@map("leads")
+}
+
+model BroadcastCampaign {
+  id               String   @id @default(uuid()) @db.Uuid
+  shop_id          String   @db.Uuid
+  message_text     String
+  image_url        String?
+  total_recipients Int
+  success_count    Int
+  fail_count       Int
+  created_at       DateTime @default(now())
+
+  shop             Shop     @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+
+  @@map("broadcast_campaigns")
+}

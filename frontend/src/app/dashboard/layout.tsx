@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans selection:bg-amber-500/30 flex">
       {/* Left Sidebar */}
-      <Sidebar shopName={shopName} userEmail={userEmail} />
+      <Sidebar shopName={shopName ?? null} userEmail={userEmail ?? null} />
 
       {/* Main Content Area */}
       <div className="pl-64 flex-1 flex flex-col min-h-screen">

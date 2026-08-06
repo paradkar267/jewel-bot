@@ -41,7 +41,7 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
         mediaId
       );
       
-      if (result.successCount > 0) {
+      if (result.success && result.successCount !== undefined && result.successCount > 0) {
         setStatus({ 
           type: 'success', 
           message: `Broadcast complete! Successfully sent to ${result.successCount} of ${result.total} customers.` 
@@ -56,7 +56,7 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
           setLimit(0);
         }, 3000);
       } else {
-        throw new Error(result.errors[0] || 'Meta API rejected the broadcast.');
+        throw new Error(result.errors?.[0] || 'Meta API rejected the broadcast.');
       }
     } catch (err: any) {
       setStatus({ 
