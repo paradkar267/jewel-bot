@@ -1,6 +1,8 @@
 const express = require('express');
 const axios = require('axios');
-const { createClient } = require('@supabase/supabase-js');
+const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
@@ -9,17 +11,21 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3002;
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.warn("⚠️ WARNING: Supabase URL or Key is missing in .env!");
-}
-const supabase = createClient(supabaseUrl || "https://placeholder.supabase.co", supabaseKey || "placeholder_key");
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // ── In-memory session store ───────
 const sessions = new Map();
+
+function checkAndResetDailyLimit(session) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (session.lastImageDate !== today) {
+    session.lastImageDate = today;
+    session.dailyImageCount = 0;
+  }
+}
 
 function getSession(phone) {
   if (!sessions.has(phone)) {
@@ -28,11 +34,15 @@ function getSession(phone) {
       state: 'idle',
       lastAnalysis: null,
       messageCount: 0,
+      dailyImageCount: 0,
+      lastImageDate: new Date().toISOString().slice(0, 10),
       joinedAt: new Date(),
       shopId: null // We'll store which shop they are talking to
     });
   }
-  return sessions.get(phone);
+  const session = sessions.get(phone);
+  checkAndResetDailyLimit(session);
+  return session;
 }
 
 // ── Database Queries ───────
@@ -42,79 +52,95 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
   console.log(`   [DEBUG] Looking up shop for phone: ${phone}, meta_id: ${metaPhoneNumberId}`);
   
   if (metaPhoneNumberId) {
-    const { data, error } = await supabase.from('shops').select('id, name, meta_phone_number_id').eq('meta_phone_number_id', metaPhoneNumberId).single();
-    if (error) console.log(`   [DEBUG] Error looking up by meta_id:`, error.message);
-    if (data && !error) {
-      console.log(`   [DEBUG] Found shop by meta_phone_number_id!`);
-      return data;
+    try {
+      const data = await prisma.shop.findFirst({
+        where: { meta_phone_number_id: metaPhoneNumberId },
+        select: { id: true, name: true, meta_phone_number_id: true }
+      });
+      if (data) {
+        console.log(`   [DEBUG] Found shop by meta_phone_number_id!`);
+        return data;
+      }
+    } catch (error) {
+      console.log(`   [DEBUG] Error looking up by meta_id:`, error.message);
     }
   }
 
   if (phone) {
-    const { data, error } = await supabase.from('shops').select('id, name, meta_phone_number_id').eq('whatsapp_number', phone).single();
-    if (data && !error) {
-      console.log(`   [DEBUG] Found shop by whatsapp_number!`);
-      return data;
-    }
+    try {
+      const data = await prisma.shop.findFirst({
+        where: { whatsapp_number: phone },
+        select: { id: true, name: true, meta_phone_number_id: true }
+      });
+      if (data) {
+        console.log(`   [DEBUG] Found shop by whatsapp_number!`);
+        return data;
+      }
+    } catch (error) {}
   }
 
   console.log(`   [DEBUG] Shop not found by ID or Phone. Using fallback...`);
   // Fallback for PoC: If no shop found for the number, get the latest active shop
-  const { data: fallbackData, error: fallbackError } = await supabase.from('shops').select('id, name, meta_phone_number_id').order('created_at', { ascending: false }).limit(1).single();
-  
-  if (fallbackError) {
+  try {
+    const fallbackData = await prisma.shop.findFirst({
+      orderBy: { created_at: 'desc' },
+      select: { id: true, name: true, meta_phone_number_id: true }
+    });
+    console.log(`   [DEBUG] Fallback succeeded! Shop:`, fallbackData?.name);
+    return fallbackData;
+  } catch (fallbackError) {
     console.log(`   [DEBUG] Fallback Error:`, fallbackError.message);
-  } else {
-    console.log(`   [DEBUG] Fallback succeeded! Shop:`, fallbackData.name);
+    return null;
   }
-  
-  return fallbackData;
 }
 
 // 2. Fetch all products for the shop
 async function fetchShopCatalog(shopId) {
   if (!shopId) return [];
 
-  const { data: catalog, error } = await supabase
-    .from('products')
-    .select('id, name, type, metal, price, url, image_url')
-    .eq('shop_id', shopId);
-
-  console.log(`   [DEBUG] Fetched ${catalog ? catalog.length : 0} products for shop_id: ${shopId}`);
-
-  if (error) {
-    console.log(`   [DEBUG] Supabase Error:`, error.message);
+  try {
+    const catalog = await prisma.product.findMany({
+      where: { shop_id: shopId },
+      select: { id: true, name: true, type: true, metal: true, price: true, url: true, image_url: true }
+    });
+    console.log(`   [DEBUG] Fetched ${catalog ? catalog.length : 0} products for shop_id: ${shopId}`);
+    return catalog || [];
+  } catch (error) {
+    console.log(`   [DEBUG] Prisma Error:`, error.message);
     return [];
   }
-  return catalog || [];
 }
 
 // 3. Track Customer Lead
-async function trackLead(shopId, phone) {
+async function trackLead(shopId, phone, userName) {
   if (!shopId || !phone) return;
   try {
-    const { data: existingLead } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('shop_id', shopId)
-      .eq('customer_phone', phone)
-      .single();
+    const existingLead = await prisma.lead.findFirst({
+      where: {
+        shop_id: shopId,
+        customer_phone: phone
+      }
+    });
       
     if (existingLead) {
-      await supabase.from('leads')
-        .update({ 
-          message_count: existingLead.message_count + 1, 
-          last_contacted_at: new Date().toISOString() 
-        })
-        .eq('id', existingLead.id);
+      await prisma.lead.update({
+        where: { id: existingLead.id },
+        data: {
+          customer_name: userName || existingLead.customer_name,
+          message_count: existingLead.message_count + 1,
+          last_contacted_at: new Date()
+        }
+      });
     } else {
-      await supabase.from('leads')
-        .insert([{ 
-          shop_id: shopId, 
-          customer_phone: phone, 
-          message_count: 1, 
-          last_contacted_at: new Date().toISOString() 
-        }]);
+      await prisma.lead.create({
+        data: {
+          shop_id: shopId,
+          customer_phone: phone,
+          customer_name: userName || null,
+          message_count: 1,
+          last_contacted_at: new Date()
+        }
+      });
     }
   } catch (err) {
     console.error("Failed to track lead:", err.message);
@@ -340,26 +366,44 @@ app.post('/webhook', async (req, res) => {
 
     // Track the lead CRM
     if (session.shopId) {
-      await trackLead(session.shopId, phone);
+      await trackLead(session.shopId, phone, userName);
       
       // Send Greeting if it's the very first message
       if (session.messageCount === 1) {
         await sendWhatsAppReply(
           phone, 
-          `👋 Hello ${userName}!\n\nWelcome to *${session.shopName}*. 💎\n\nI am your AI Jewelry Assistant. Send me a photo of any jewelry design, and I will find it in our catalog for you! ✨`, 
+          `👋 Hello ${userName}!\n\nWelcome to *${session.shopName}*. 💎\n\nI am your AI Jewelry Assistant. Send me a photo of any jewelry design, and I will find it in our catalog for you! ✨\n\nℹ️ *Daily Limit:* Aap daily maximum *5 images* search ke liye bhej sakte hain.`, 
           session.metaPhoneNumberId
         );
       }
     }
 
     if (hasImage) {
-      await sendWhatsAppReply(phone, `🔍 *Analyzing your jewelry...*\n\nPlease wait a moment while I search our catalog. ✨`, session.metaPhoneNumberId);
+      const MAX_DAILY_IMAGES = 5;
+      if (session.dailyImageCount >= MAX_DAILY_IMAGES) {
+        console.log(`   ⚠️ Daily image limit reached for ${phone} (${session.dailyImageCount}/${MAX_DAILY_IMAGES})`);
+        await sendWhatsAppReply(
+          phone,
+          `⚠️ *Daily Limit Reached! (5/5 Images)*\n\nAapki aaj ki *5 images* ki daily search limit poori ho chuki hai. 🛑\n\nKripya kal (tomorrow) naye jewelry designs search karne ke liye dobara image bheinjein! ✨\n\n_Note: Har user ke liye daily 5 images ki limit hai taaki hamara system fast kaam kare aur API waste na ho._`,
+          session.metaPhoneNumberId
+        );
+        return;
+      }
+
+      session.dailyImageCount++;
+      const remainingImages = MAX_DAILY_IMAGES - session.dailyImageCount;
+
+      await sendWhatsAppReply(
+        phone, 
+        `🔍 *Analyzing your jewelry...*\n\nPlease wait a moment while I search our catalog. ✨\n\n📊 _(Today's Limit: ${session.dailyImageCount}/${MAX_DAILY_IMAGES} used, ${remainingImages} left for today)_`, 
+        session.metaPhoneNumberId
+      );
 
       session.state = 'analyzing';
       console.log(`   Downloading image...`);
       const { base64, contentType } = await downloadImageAsBase64(mediaId);
 
-      console.log(`   Analyzing with Gemini & matching catalog in Supabase...`);
+      console.log(`   Analyzing with Gemini & matching catalog in Database...`);
       
       const catalog = await fetchShopCatalog(session.shopId);
       const analysis = await analyzeJewelryWithGemini(base64, contentType, catalog);
@@ -386,15 +430,49 @@ app.post('/webhook', async (req, res) => {
     } else if (textBody) {
       const text = textBody.toLowerCase().trim();
 
-      if (['hi', 'hello', 'hey', 'start'].some(g => text.includes(g))) {
+      if (text === 'stop') {
+        if (session.shopId) {
+          try {
+            await prisma.lead.updateMany({
+              where: { shop_id: session.shopId, customer_phone: phone },
+              data: { is_active: false }
+            });
+            await sendWhatsAppReply(phone,
+              `⛔ *You have been unsubscribed.*\n\nYou will no longer receive catalog updates or broadcast messages from us. You can reply *START* at any time to resubscribe.`,
+              session.metaPhoneNumberId
+            );
+            console.log(`   ⛔ Unsubscribed customer: ${phone}`);
+          } catch (err) {
+            console.error("Error unsubscribing lead:", err.message);
+          }
+        }
+      } else if (text === 'start' || text === 'subscribe') {
+        if (session.shopId) {
+          try {
+            await prisma.lead.updateMany({
+              where: { shop_id: session.shopId, customer_phone: phone },
+              data: { is_active: true }
+            });
+            await sendWhatsAppReply(phone,
+              `✅ *Welcome back!*\n\nYou have successfully resubscribed to updates from *${session.shopName || 'our shop'}*.\n\n📸 Send me a jewelry image anytime to find it in our catalog!`,
+              session.metaPhoneNumberId
+            );
+            console.log(`   ✅ Subscribed customer: ${phone}`);
+          } catch (err) {
+            console.error("Error resubscribing lead:", err.message);
+          }
+        }
+      } else if (['hi', 'hello', 'hey'].some(g => text.includes(g))) {
         await sendWhatsAppReply(phone,
           `👋 *Welcome ${session.shopName ? 'to ' + session.shopName : ''}, ${userName}!*\n\n` +
           `Looking for a specific jewelry piece? Just send us a photo!\n\n` +
           `Our AI will instantly find the exact or similar piece from our catalog and share the price and purchase link.\n\n` +
-          `📸 *Send an image to get started!*`, session.metaPhoneNumberId
+          `📸 *Send an image to get started!*\n` +
+          `ℹ️ *Daily Search Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n` +
+          `_Note: Reply STOP at any time to unsubscribe from broadcast updates._`, session.metaPhoneNumberId
         );
       } else {
-        await sendWhatsAppReply(phone, `📸 *Send me a jewelry image to find it in our catalog!*`, session.metaPhoneNumberId);
+        await sendWhatsAppReply(phone, `📸 *Send me a jewelry image to find it in our catalog!*\n\nℹ️ *Daily Search Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n_Note: You can reply STOP at any time to unsubscribe from updates._`, session.metaPhoneNumberId);
       }
     }
   } catch (err) {
@@ -405,8 +483,12 @@ app.post('/webhook', async (req, res) => {
 // ── Health & Webhook Verification ───────
 app.get('/health', async (req, res) => {
   // Test DB connection
-  const { count } = await supabase.from('shops').select('*', { count: 'exact', head: true });
-  res.json({ status: 'ok', supabase_connected: count !== null });
+  try {
+    const count = await prisma.shop.count();
+    res.json({ status: 'ok', database_connected: true, count });
+  } catch(error) {
+    res.status(500).json({ status: 'error', database_connected: false });
+  }
 });
 
 app.get('/webhook', (req, res) => {
