@@ -428,7 +428,8 @@ app.post('/webhook', async (req, res) => {
         await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId);
         console.log(`   ✅ Reply sent to ${phone}`);
       } catch (err) {
-        console.error("   ❌ Error during image processing:", err.message);
+        const errorDetails = err.response ? JSON.stringify(err.response.data) : err.message;
+        console.error("   ❌ Error during image processing:", errorDetails);
         session.state = 'idle';
         await sendWhatsAppReply(
           phone,
