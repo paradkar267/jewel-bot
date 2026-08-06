@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { base64Image, mimeType } = await req.json();
+
+    if (!base64Image || !mimeType) {
+      return NextResponse.json({ error: 'Image data is required' }, { status: 400 });
+    }
 
     const prompt = `You are an expert jewelry cataloger. Look at this image and extract details in ONLY valid JSON format.
     {
@@ -13,12 +25,13 @@ export async function POST(req: Request) {
       "price": 10000
     }`;
 
-    // Read Gemini API Key from process.env (Server-side only)
-    // We will assume GEMINI_API_KEY is available in the root .env, we should copy it to .env.local
     const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Server configuration error: Gemini API key is missing' }, { status: 500 });
+    }
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         contents: [{
           parts: [

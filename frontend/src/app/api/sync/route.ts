@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { parseStringPromise } from 'xml2js';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { url } = await req.json();
 
     if (!url) {
