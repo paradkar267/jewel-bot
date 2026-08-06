@@ -13,6 +13,7 @@ model Shop {
   owner_email          String?   @unique
   password             String?   // Hashed password for NextAuth
   meta_phone_number_id String?
+  meta_access_token    String?
   created_at           DateTime  @default(now())
 
   products             Product[]
@@ -44,6 +45,7 @@ model Lead {
   customer_phone    String
   customer_name     String?
   message_count     Int      @default(1)
+  daily_image_count Int      @default(0)
   is_active         Boolean  @default(true)
   last_contacted_at DateTime @default(now())
   created_at        DateTime @default(now())
