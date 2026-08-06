@@ -200,7 +200,7 @@ Regardless of whether you find an exact match or not, find up to 2 similar items
 IMPORTANT: If the image does NOT contain jewelry, set is_jewelry to false and fill other fields with null.`;
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
     {
       contents: [{
         parts: [
@@ -400,32 +400,42 @@ app.post('/webhook', async (req, res) => {
       );
 
       session.state = 'analyzing';
-      console.log(`   Downloading image...`);
-      const { base64, contentType } = await downloadImageAsBase64(mediaId);
+      try {
+        console.log(`   Downloading image...`);
+        const { base64, contentType } = await downloadImageAsBase64(mediaId);
 
-      console.log(`   Analyzing with Gemini & matching catalog in Database...`);
-      
-      const catalog = await fetchShopCatalog(session.shopId);
-      const analysis = await analyzeJewelryWithGemini(base64, contentType, catalog);
-      console.log(`   [DEBUG] Gemini Analysis:`, JSON.stringify(analysis, null, 2));
+        console.log(`   Analyzing with Gemini & matching catalog in Database...`);
+        
+        const catalog = await fetchShopCatalog(session.shopId);
+        const analysis = await analyzeJewelryWithGemini(base64, contentType, catalog);
+        console.log(`   [DEBUG] Gemini Analysis:`, JSON.stringify(analysis, null, 2));
 
-      // Build matchingData from Gemini's IDs
-      const exactMatch = analysis.exact_match_id ? catalog.find(item => item.id === analysis.exact_match_id) : null;
-      let suggestions = (analysis.suggestion_ids || []).map(id => catalog.find(item => item.id === id)).filter(Boolean);
-      
-      // Prevent showing the exact match in the suggestions list again
-      if (analysis.exact_match_id) {
-        suggestions = suggestions.filter(item => item.id !== analysis.exact_match_id);
+        // Build matchingData from Gemini's IDs
+        const exactMatch = analysis.exact_match_id ? catalog.find(item => item.id === analysis.exact_match_id) : null;
+        let suggestions = (analysis.suggestion_ids || []).map(id => catalog.find(item => item.id === id)).filter(Boolean);
+        
+        // Prevent showing the exact match in the suggestions list again
+        if (analysis.exact_match_id) {
+          suggestions = suggestions.filter(item => item.id !== analysis.exact_match_id);
+        }
+
+        const matchingData = { exactMatch, suggestions };
+
+        session.lastAnalysis = analysis;
+        session.state = 'idle';
+
+        const replyMessage = formatWhatsAppReply(analysis, matchingData);
+        await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId);
+        console.log(`   ✅ Reply sent to ${phone}`);
+      } catch (err) {
+        console.error("   ❌ Error during image processing:", err.message);
+        session.state = 'idle';
+        await sendWhatsAppReply(
+          phone,
+          `❌ *Sorry!* We could not process your image at this moment. Please try sending it again.`,
+          session.metaPhoneNumberId
+        );
       }
-
-      const matchingData = { exactMatch, suggestions };
-
-      session.lastAnalysis = analysis;
-      session.state = 'idle';
-
-      const replyMessage = formatWhatsAppReply(analysis, matchingData);
-      await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId);
-      console.log(`   ✅ Reply sent to ${phone}`);
 
     } else if (textBody) {
       const text = textBody.toLowerCase().trim();
