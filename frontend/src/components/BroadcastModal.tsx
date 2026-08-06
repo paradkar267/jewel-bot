@@ -30,7 +30,11 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
         setStatus({ type: 'idle', message: 'Uploading image to WhatsApp...' });
         const formData = new FormData();
         formData.append('file', file);
-        mediaId = await uploadMetaMedia(formData);
+        const uploadRes = await uploadMetaMedia(formData);
+        if (!uploadRes.success) {
+          throw new Error(uploadRes.error || 'Failed to upload image to WhatsApp');
+        }
+        mediaId = uploadRes.mediaId;
       }
 
       setStatus({ type: 'idle', message: 'Initiating broadcast queue...' });
