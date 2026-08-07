@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Coins, RefreshCw, Calculator, Sparkles, CheckCircle2, AlertCircle, TrendingUp, Zap } from "lucide-react";
+import { Coins, RefreshCw, Calculator, Sparkles, CheckCircle2, AlertCircle, TrendingUp, Zap, RotateCcw } from "lucide-react";
 import { getShopMetalRates, updateShopMetalRatesAndRecalculate } from "@/app/actions/product";
 
 interface MetalRateCalculatorProps {
@@ -15,8 +15,8 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
 
   // Real-Time India Live Market Reference Benchmarks (INR / gram)
   const LIVE_MARKET_RATES = {
-    gold_24k: 14750, // ₹14,750/g (₹1.47 Lakh / 10g)
-    gold_22k: 13750, // ₹13,750/g (₹1.37 Lakh / 10g)
+    gold_24k: 14750, // ₹14,750/g (24K Gold 999)
+    gold_22k: 13750, // ₹13,750/g (22K Gold 916 - Standard Jewelry Rate)
     gold_18k: 11250, // ₹11,250/g
     silver: 240,     // ₹240/g (₹2.4 Lakh / kg)
     platinum: 4500   // ₹4,500/g
@@ -33,9 +33,11 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
       const res = await getShopMetalRates();
       if (res.success) {
         setRates({
+          // Default to 22K Gold rate (13750) if no custom rate is set or if rate is zero
           gold_rate: res.gold_rate || 13750,
           silver_rate: res.silver_rate || 240,
-          making_charge_percent: res.making_charge_percent || 12,
+          // Cap default making charges to realistic 12% if invalid/excessive value exists
+          making_charge_percent: (res.making_charge_percent && res.making_charge_percent <= 50) ? res.making_charge_percent : 12,
         });
       }
       setLoading(false);
@@ -44,14 +46,14 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
   }, []);
 
   const handleAutoFillLiveRates = () => {
-    setRates(prev => ({
-      ...prev,
+    setRates({
       gold_rate: LIVE_MARKET_RATES.gold_22k,
-      silver_rate: LIVE_MARKET_RATES.silver
-    }));
+      silver_rate: LIVE_MARKET_RATES.silver,
+      making_charge_percent: 12
+    });
     setStatus({
       type: "success",
-      message: "Auto-filled today's live Indian market rates (₹13,750/g for 22K)! Click 'Recalculate' to update catalog."
+      message: "Reset & Auto-filled to Standard Live Market Rates (₹13,750/g for 22K, ₹240/g Silver, 12% Making Charge)! Click 'Recalculate' to update catalog."
     });
   };
 
@@ -130,8 +132,8 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
             onClick={handleAutoFillLiveRates}
             className="text-[11px] font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors self-start sm:self-auto bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 shadow-sm"
           >
-            <Zap className="w-3 h-3 fill-amber-400" />
-            Auto-Fill Live Market Rates
+            <RotateCcw className="w-3 h-3 text-amber-400" />
+            Reset to Standard Live Rates
           </button>
         </div>
 
@@ -140,8 +142,8 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
             <div className="text-[10px] text-amber-300 font-semibold">🥇 24K Pure Gold</div>
             <div className="font-extrabold text-white text-sm">₹{LIVE_MARKET_RATES.gold_24k.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-gray-400">/g</span></div>
           </div>
-          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
-            <div className="text-[10px] text-amber-300 font-semibold">👑 22K Gold (916)</div>
+          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center ring-1 ring-amber-400/40">
+            <div className="text-[10px] text-amber-300 font-semibold">👑 22K Gold (916) [Default]</div>
             <div className="font-extrabold text-white text-sm">₹{LIVE_MARKET_RATES.gold_22k.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-gray-400">/g</span></div>
           </div>
           <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
@@ -166,6 +168,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
         <div>
           <label className="block text-xs font-semibold text-amber-300 mb-1 flex items-center justify-between">
             <span>🪙 Active Gold Rate (₹ / gram)</span>
+            <span className="text-[10px] text-gray-400 font-normal">(Default: 22K ₹13,750)</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">₹</span>
@@ -181,8 +184,9 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
 
         {/* Silver Rate */}
         <div>
-          <label className="block text-xs font-semibold text-gray-300 mb-1">
+          <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center justify-between">
             <span>⚪ Active Silver Rate (₹ / gram)</span>
+            <span className="text-[10px] text-gray-400 font-normal">(Default: ₹240)</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">₹</span>
@@ -198,8 +202,9 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
 
         {/* Making Charge % */}
         <div>
-          <label className="block text-xs font-semibold text-gray-300 mb-1">
+          <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center justify-between">
             <span>🛠️ Default Making Charges (%)</span>
+            <span className="text-[10px] text-gray-400 font-normal">(Default: 12%)</span>
           </label>
           <div className="relative">
             <input
