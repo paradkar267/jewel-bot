@@ -17,28 +17,44 @@ export default function LandingPage() {
       <div className="fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_20%,rgba(217,119,6,0.15)_0%,transparent_45%)] pointer-events-none" />
 
       {/* ── Header / Navigation ─────── */}
-      <header className="relative z-50 border-b border-amber-500/15 bg-[#060606]/75 backdrop-blur-2xl sticky top-0">
+      <header className="relative z-50 border-b border-amber-500/20 bg-[#060606]/85 backdrop-blur-2xl sticky top-0 shadow-[0_4px_30px_rgba(0,0,0,0.8),0_1px_15px_rgba(245,158,11,0.15)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="h-10 w-10 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.45)] border border-amber-200/50 group-hover:scale-105 transition-transform">
+            <Link href="/" className="flex items-center gap-3.5 group">
+              <div className="h-10 w-10 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 rounded-xl flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.5)] border border-amber-200/60 group-hover:scale-105 group-hover:shadow-[0_0_30px_rgba(245,158,11,0.7)] transition-all">
                 <Store className="h-5 w-5 text-black fill-black" />
               </div>
-              <span className="text-xl font-extrabold tracking-tight text-white font-sans">
+              <span className="text-xl font-black tracking-tight text-white font-sans flex items-center gap-0.5">
                 JewelBot<span className="text-amber-400">.AI</span>
               </span>
             </Link>
 
-            {/* Auth Buttons */}
+            {/* Center Navigation Links */}
+            <nav className="hidden md:flex items-center gap-8">
+              <a href="#features" className="text-sm font-medium text-gray-300 hover:text-amber-400 transition-colors">
+                Features
+              </a>
+              <a href="#features" className="text-sm font-medium text-gray-300 hover:text-amber-400 transition-colors">
+                How It Works
+              </a>
+              <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-amber-400 transition-colors">
+                SaaS Portal
+              </Link>
+            </nav>
+
+            {/* Right Action Buttons */}
             <div className="flex items-center gap-6">
-              <Link href="/login" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">
+              <Link 
+                href="/login" 
+                className="text-sm font-semibold text-gray-300 hover:text-white transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-amber-400 hover:after:w-full after:transition-all"
+              >
                 Sign In
               </Link>
               <Link 
                 href="/login" 
-                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold text-black transition-all duration-200 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.35)] hover:brightness-110 hover:scale-[1.03]"
+                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold text-black transition-all duration-300 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.4)] hover:brightness-110 hover:scale-[1.04] hover:shadow-[0_0_35px_rgba(245,158,11,0.6)] border border-amber-200/60"
               >
                 Get Started
               </Link>
