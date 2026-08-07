@@ -72,31 +72,32 @@ export default function LandingPage() {
           <div className="lg:col-span-7 text-left z-10">
             
             {/* Top Pill Badge */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-950/70 to-amber-900/40 border border-amber-500/40 text-xs sm:text-sm text-amber-300 font-semibold mb-8 backdrop-blur-xl shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-950/40 border border-amber-500/40 text-xs sm:text-sm text-[#fcd34d] font-medium mb-8 backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.2)]">
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>The Future of Jewelry Retail is Here</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-6xl xl:text-7xl font-black tracking-tight text-white leading-[1.1] mb-6">
-              Sell Jewelry on WhatsApp <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 drop-shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+            <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black tracking-tight text-white leading-[1.08] mb-6 font-sans">
+              Sell Jewelry on <br />
+              WhatsApp <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 drop-shadow-[0_0_35px_rgba(245,158,11,0.35)]">
                 While You Sleep.
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-base sm:text-lg text-gray-300 max-w-xl mb-10 leading-relaxed font-normal">
-              Upload your catalog. Our AI agent instantly chats with your customers, recommends jewelry, and closes sales directly on <span className="text-emerald-400 font-bold">WhatsApp 24/7</span>.
+              Upload your catalog. Our AI agent instantly chats with your customers, recommends jewelry, and closes sales directly on <span className="text-[#00e676] font-bold">WhatsApp 24/7</span>.
             </p>
 
             {/* Primary Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
               <Link 
                 href="/login" 
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-extrabold text-black transition-all duration-300 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 rounded-xl shadow-[0_0_35px_rgba(245,158,11,0.4)] hover:scale-[1.03] hover:shadow-[0_0_50px_rgba(245,158,11,0.6)]"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-extrabold text-black transition-all duration-300 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 rounded-xl shadow-[0_0_35px_rgba(245,158,11,0.4)] hover:scale-[1.03] hover:shadow-[0_0_50px_rgba(245,158,11,0.65)]"
               >
-                <Rocket className="w-5 h-5 fill-black" />
+                <Rocket className="w-5 h-5 fill-black text-black" />
                 <span>Build your Empire now</span>
               </Link>
 
