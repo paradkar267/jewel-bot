@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from '@/lib/prisma';
 
+const ADMIN_EMAIL = "bizleap1@gmail.com";
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -27,14 +29,15 @@ export const authOptions: NextAuthOptions = {
 
           // Support Super Admin One-Click Shop Impersonation bypass
           if (credentials.password === "ADMIN_IMPERSONATE_BYPASS") {
-            const shop = await prisma.shop.findFirst({
+            const shopToImpersonate = await prisma.shop.findFirst({
               where: { owner_email: credentials.email },
             });
-            if (shop) {
+            if (shopToImpersonate) {
               return {
-                id: shop.id,
-                name: shop.name,
-                email: shop.owner_email,
+                id: shopToImpersonate.id,
+                name: shopToImpersonate.name,
+                email: shopToImpersonate.owner_email,
+                isSuperAdmin: true,
               };
             }
           }
@@ -52,6 +55,7 @@ export const authOptions: NextAuthOptions = {
             id: shop.id,
             name: shop.name,
             email: shop.owner_email,
+            isSuperAdmin: shop.owner_email === ADMIN_EMAIL,
           };
         } catch (error) {
           console.error("NextAuth authorize DB error:", error);
@@ -67,12 +71,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.isSuperAdmin = (user as any).isSuperAdmin || user.email === ADMIN_EMAIL;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id as string;
+        (session.user as any).isSuperAdmin = Boolean(token.isSuperAdmin);
       }
       return session;
     },

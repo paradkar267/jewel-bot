@@ -9,7 +9,8 @@ const ADMIN_EMAIL = 'bizleap1@gmail.com';
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user || session.user.email !== ADMIN_EMAIL) {
+  const isSuperAdmin = Boolean((session?.user as any)?.isSuperAdmin) || session?.user?.email === ADMIN_EMAIL;
+  if (!session || !session.user || !isSuperAdmin) {
     throw new Error("Unauthorized: Admin access required.");
   }
 }
