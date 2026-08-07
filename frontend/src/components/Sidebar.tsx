@@ -8,10 +8,13 @@ import LogoutButton from './LogoutButton';
 interface SidebarProps {
   shopName: string | null;
   userEmail: string | null;
+  isSuperAdmin?: boolean;
 }
 
-export default function Sidebar({ shopName, userEmail }: SidebarProps) {
+export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarProps) {
   const pathname = usePathname();
+
+  const isAdminPage = pathname === '/dashboard/admin' || pathname.startsWith('/dashboard/admin');
 
   const baseItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -24,9 +27,19 @@ export default function Sidebar({ shopName, userEmail }: SidebarProps) {
     { name: 'Bot & Store Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
-  const menuItems = userEmail === 'bizleap1@gmail.com'
-    ? [{ name: 'Admin Console', href: '/dashboard/admin', icon: Shield }]
-    : baseItems;
+  const adminItem = { name: 'Admin Console', href: '/dashboard/admin', icon: Shield };
+
+  let menuItems;
+
+  if (isAdminPage) {
+    // When on Admin Page, show ONLY Admin Console navigation
+    menuItems = [adminItem];
+  } else {
+    // When on regular shop pages, show shop items. If user is Super Admin, prepend Admin Console item
+    menuItems = (isSuperAdmin || userEmail === 'bizleap1@gmail.com')
+      ? [adminItem, ...baseItems]
+      : baseItems;
+  }
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 w-64 bg-[#111111] border-r border-white/5 flex flex-col justify-between">
@@ -39,7 +52,9 @@ export default function Sidebar({ shopName, userEmail }: SidebarProps) {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-black text-white tracking-wider uppercase">JewelBot</span>
-            <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Vault Panel</span>
+            <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
+              {isAdminPage ? 'Platform Control' : 'Vault Panel'}
+            </span>
           </div>
         </div>
 
