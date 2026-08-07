@@ -373,9 +373,9 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                       </div>
                       <div>
                         <div className="text-sm font-bold text-white">{shop.name}</div>
-                        <div className="flex items-center text-[10px] text-gray-500 mt-0.5 font-semibold">
+                        <div className="flex items-center text-[10px] text-gray-500 mt-0.5 font-semibold" suppressHydrationWarning>
                           <Calendar className="w-3 h-3 mr-1" />
-                          Registered: {new Date(shop.created_at).toLocaleDateString()}
+                          Registered: {new Date(shop.created_at).toLocaleDateString('en-US')}
                         </div>
                       </div>
                     </div>

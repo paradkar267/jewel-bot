@@ -113,8 +113,8 @@ export default function CustomerTable({ initialLeads }: { initialLeads: LeadItem
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 text-blue-500 mr-3" />
-                    <span className="text-sm text-gray-300">
-                      {new Date(lead.last_contacted_at).toLocaleDateString()} at {new Date(lead.last_contacted_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    <span className="text-sm text-gray-300" suppressHydrationWarning>
+                      {new Date(lead.last_contacted_at).toLocaleDateString('en-US')}
                     </span>
                   </div>
                 </td>
