@@ -190,18 +190,17 @@ Below is the shop's JSON product catalog:
 ${catalogJson}
 </CATALOG>
 
-CRITICAL MULTI-ITEM & INSTAGRAM SCREENSHOT MATCHING INSTRUCTIONS:
-1. The model in the image MAY BE WEARING MULTIPLE JEWELRY PIECES (e.g. Necklace, Rings, Bracelets/Cuffs, Earrings, Bangles).
-2. Examine ALL jewelry pieces featured in the image (neck, hands, wrists, ears).
-3. IGNORE ALL INSTAGRAM/MOBILE UI OVERLAYS: Ignore like buttons (❤️), comment icons (💬), share arrows, profile handles, captions, battery indicators, or video timebars.
-4. FOCUS ON THE JEWELRY: Match any jewelry piece (necklace, ring, bracelet, cuff, earring, pendant) against items in <CATALOG>.
-5. LENIENT & FLEXIBLE MATCHING: If ANY item in <CATALOG> visually resembles any of the jewelry pieces worn by the model (e.g., gold chain, teardrop pendant, gold ring, open cuff bracelet, Kundan/Polki work, diamond accents), set "exact_match_id" to that product's UUID.
-6. SUGGESTIONS: Pick up to 3 other visually or category-related items from <CATALOG> for "suggestion_ids".
+CRITICAL MULTI-ITEM, HOOP EARRINGS & INSTAGRAM SCREENSHOT MATCHING INSTRUCTIONS:
+1. Examine ALL jewelry pieces featured in the image (earrings, hoops, studs, necklace, rings, bracelets, cuffs).
+2. IGNORE BACKGROUND/PROP OBJECTS: Ignore rocks, white pebbles, shadows, fabric folds, leaves, display stands, or models.
+3. IGNORE ALL MOBILE/INSTAGRAM UI OVERLAYS: Ignore like buttons (❤️), comment icons (💬), share arrows, profile handles, captions, or timebars.
+4. LENIENT & FLEXIBLE MATCHING: Compare visual design features (twisted gold, hoops, earrings, jhumka, rings, chain, teardrop, stones) with items in <CATALOG>.
+5. ALWAYS PREFER MATCHING: If ANY item in <CATALOG> belongs to the same category (e.g., earring/hoops/bali or necklace or ring) or shares design features with the image, set "exact_match_id" to that product's UUID.
 
 Schema to return:
 {
-  "type": "ring | necklace | earring | bracelet | pendant | anklet | bangle | other",
-  "subtype": "specific style description",
+  "type": "earring | ring | necklace | bracelet | pendant | anklet | bangle | other",
+  "subtype": "specific style description (e.g. twisted gold hoop earrings)",
   "metal": "gold | silver | platinum | rose gold | white gold | copper | brass | unknown",
   "metal_purity": "22k or 18k or 925 or null",
   "gemstones": ["list of gemstones or empty array"],
@@ -478,16 +477,44 @@ app.post('/webhook', async (req, res) => {
         const analysis = await analyzeJewelryWithGemini(base64, contentType, catalog);
         console.log(`   [DEBUG] Gemini Analysis:`, JSON.stringify(analysis, null, 2));
 
+        // 1. Direct AI UUID Match
         let exactMatch = analysis.exact_match_id ? catalog.find(item => item.id === analysis.exact_match_id) : null;
         let suggestions = (analysis.suggestion_ids || []).map(id => catalog.find(item => item.id === id)).filter(Boolean);
         
-        // Smart Fallback: If no exactMatch was found, auto-match by type or metal from catalog so customer ALWAYS gets catalog items!
+        // 2. Smart 3-Stage Fuzzy Fallback Matcher: If Gemini did not return exact_match_id, match by category/subtype/keywords
         if (!exactMatch && catalog.length > 0) {
-          const typeMatch = catalog.find(item => (item.type || '').toLowerCase() === (analysis.type || '').toLowerCase());
-          if (typeMatch) {
-            exactMatch = typeMatch;
-          } else {
-            exactMatch = catalog[0]; // Top catalog item fallback
+          const detectedType = (analysis.type || '').toLowerCase();
+          const detectedSubtype = (analysis.subtype || '').toLowerCase();
+          const detectedDetails = (analysis.design_details || '').toLowerCase();
+
+          // Synonym map for category names
+          const synonymMap = {
+            earring: ['earring', 'earrings', 'hoop', 'hoops', 'stud', 'studs', 'bali', 'balis', 'jhumka'],
+            necklace: ['necklace', 'necklaces', 'haar', 'chain', 'choker', 'pendant', 'mangalsutra'],
+            ring: ['ring', 'rings', 'anguthi', 'band'],
+            bracelet: ['bracelet', 'bracelets', 'bangle', 'bangles', 'kangan', 'kada', 'cuff']
+          };
+
+          const categoryKeywords = synonymMap[detectedType] || [detectedType];
+
+          exactMatch = catalog.find(item => {
+            const itemName = (item.name || '').toLowerCase();
+            const itemType = (item.type || '').toLowerCase();
+
+            // Match if category keywords overlap
+            if (categoryKeywords.some(kw => itemType.includes(kw) || itemName.includes(kw))) {
+              return true;
+            }
+            // Match subtype or design details
+            if (detectedSubtype && itemName.includes(detectedSubtype)) {
+              return true;
+            }
+            return false;
+          });
+
+          // Top catalog fallback if still unmatched
+          if (!exactMatch) {
+            exactMatch = catalog[0];
           }
         }
 
@@ -569,7 +596,7 @@ app.post('/webhook', async (req, res) => {
       let greeting = session.customGreeting || `Welcome to *${session.shopName || 'our Jewelry Store'}*! 💎`;
       let reply = `👋 Hello! ${greeting}\n\n`;
       reply += `📸 *Send any Jewelry Image or Instagram Screenshot* to search our live catalog!\n\n`;
-      reply += `💬 Or type what you are looking for (e.g. *"Show show gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
+      reply += `💬 Or type what you are looking for (e.g. *"Show me gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
       if (session.storeAddress) {
         reply += `📍 *Showroom Address:* ${session.storeAddress}\n`;
       }
