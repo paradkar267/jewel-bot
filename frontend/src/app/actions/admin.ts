@@ -14,6 +14,17 @@ async function verifyAdmin() {
   }
 }
 
+function serializeShop(shop: any) {
+  if (!shop) return null;
+  return {
+    ...shop,
+    gold_rate_per_gram: shop.gold_rate_per_gram !== null && shop.gold_rate_per_gram !== undefined ? Number(shop.gold_rate_per_gram) : null,
+    silver_rate_per_gram: shop.silver_rate_per_gram !== null && shop.silver_rate_per_gram !== undefined ? Number(shop.silver_rate_per_gram) : null,
+    default_making_charge_percent: shop.default_making_charge_percent !== null && shop.default_making_charge_percent !== undefined ? Number(shop.default_making_charge_percent) : null,
+    created_at: shop.created_at ? new Date(shop.created_at).toISOString() : null,
+  };
+}
+
 export async function getAdminStats() {
   try {
     await verifyAdmin();
@@ -38,10 +49,7 @@ export async function getAdminStats() {
       orderBy: { created_at: 'desc' }
     });
 
-    const serializedShops = shops.map(shop => ({
-      ...shop,
-      created_at: shop.created_at.toISOString()
-    }));
+    const serializedShops = shops.map(serializeShop);
 
     return {
       success: true,
@@ -117,10 +125,7 @@ export async function createShopFromAdmin(data: {
 
   return {
     success: true,
-    shop: {
-      ...shop,
-      created_at: shop.created_at.toISOString()
-    }
+    shop: serializeShop(shop)
   };
 }
 
@@ -176,10 +181,7 @@ export async function updateShopMeta(
 
   return {
     success: true,
-    shop: {
-      ...updated,
-      created_at: updated.created_at.toISOString()
-    }
+    shop: serializeShop(updated)
   };
 }
 
