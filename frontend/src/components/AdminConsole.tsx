@@ -110,31 +110,15 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
   const totalLeads = shops.reduce((acc, curr) => acc + curr._count.leads, 0);
   const totalBroadcasts = shops.reduce((acc, curr) => acc + curr._count.broadcasts, 0);
 
-  // 🔑 One-Click Impersonation Login
-  const handleImpersonate = async (shop: ShopWithCounts) => {
+  // 🔑 One-Click Impersonation Login in New Tab
+  const handleImpersonate = (shop: ShopWithCounts) => {
     if (!shop.owner_email) return;
-    if (!window.confirm(`🔑 Super Admin Access: Do you want to log in directly to "${shop.name}" dashboard as the shop owner?`)) {
+    if (!window.confirm(`🔑 Super Admin Access: Do you want to open "${shop.name}" dashboard in a NEW tab?`)) {
       return;
     }
 
-    setImpersonatingShopId(shop.id);
-    try {
-      const res = await signIn('credentials', {
-        email: shop.owner_email,
-        password: 'ADMIN_IMPERSONATE_BYPASS',
-        redirect: false
-      });
-
-      if (res?.ok) {
-        window.location.href = '/dashboard';
-      } else {
-        alert("Failed to log in as shop owner.");
-      }
-    } catch (err: any) {
-      alert("Error logging in: " + err.message);
-    } finally {
-      setImpersonatingShopId(null);
-    }
+    const impersonateUrl = `/api/auth/impersonate?email=${encodeURIComponent(shop.owner_email)}`;
+    window.open(impersonateUrl, '_blank');
   };
 
   // ⚡ Run Health & Diagnostic Checks
