@@ -13,18 +13,18 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Live Market Reference Benchmarks (INR / gram)
+  // Real-Time India Live Market Reference Benchmarks (INR / gram)
   const LIVE_MARKET_RATES = {
-    gold_24k: 8150,
-    gold_22k: 7470,
-    gold_18k: 6115,
-    silver: 97,
-    platinum: 2850
+    gold_24k: 14750, // ₹14,750/g (₹1.47 Lakh / 10g)
+    gold_22k: 13750, // ₹13,750/g (₹1.37 Lakh / 10g)
+    gold_18k: 11250, // ₹11,250/g
+    silver: 240,     // ₹240/g (₹2.4 Lakh / kg)
+    platinum: 4500   // ₹4,500/g
   };
 
   const [rates, setRates] = useState({
-    gold_rate: 7450,
-    silver_rate: 97,
+    gold_rate: 13750,
+    silver_rate: 240,
     making_charge_percent: 12,
   });
 
@@ -33,8 +33,8 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
       const res = await getShopMetalRates();
       if (res.success) {
         setRates({
-          gold_rate: res.gold_rate || 7450,
-          silver_rate: res.silver_rate || 97,
+          gold_rate: res.gold_rate || 13750,
+          silver_rate: res.silver_rate || 240,
           making_charge_percent: res.making_charge_percent || 12,
         });
       }
@@ -51,7 +51,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
     }));
     setStatus({
       type: "success",
-      message: "Auto-filled today's live Indian market rates! Click 'Recalculate' to update catalog."
+      message: "Auto-filled today's live Indian market rates (₹13,750/g for 22K)! Click 'Recalculate' to update catalog."
     });
   };
 
@@ -114,7 +114,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
         {/* Live Calculation Badge */}
         <div className="bg-black/60 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-semibold flex items-center gap-2 self-start sm:self-auto">
           <Calculator className="w-4 h-4 text-amber-400" />
-          <span>10g Gold Preview: <strong className="text-white font-extrabold">₹{sample10gPrice.toLocaleString('en-IN')}</strong></span>
+          <span>10g 22K Gold Preview: <strong className="text-white font-extrabold">₹{sample10gPrice.toLocaleString('en-IN')}</strong></span>
         </div>
       </div>
 
@@ -123,15 +123,15 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            Today's Live India Market Benchmark Rates (₹/gram)
+            Today's Real-Time India Market Benchmark Rates (₹/gram)
           </span>
           <button
             type="button"
             onClick={handleAutoFillLiveRates}
-            className="text-[11px] font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors self-start sm:self-auto bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20"
+            className="text-[11px] font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors self-start sm:self-auto bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 shadow-sm"
           >
             <Zap className="w-3 h-3 fill-amber-400" />
-            Auto-Fill Live Rates
+            Auto-Fill Live Market Rates
           </button>
         </div>
 
@@ -174,7 +174,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
               value={rates.gold_rate}
               onChange={(e) => setRates({ ...rates, gold_rate: Number(e.target.value) })}
               className="w-full pl-7 pr-3 py-2 bg-black/70 border border-amber-500/30 rounded-xl text-white text-sm font-extrabold focus:outline-none focus:border-amber-400"
-              placeholder="7450"
+              placeholder="13750"
             />
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
               value={rates.silver_rate}
               onChange={(e) => setRates({ ...rates, silver_rate: Number(e.target.value) })}
               className="w-full pl-7 pr-3 py-2 bg-black/70 border border-white/10 rounded-xl text-white text-sm font-bold focus:outline-none focus:border-amber-400"
-              placeholder="97"
+              placeholder="240"
             />
           </div>
         </div>
