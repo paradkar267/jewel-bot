@@ -182,6 +182,38 @@ export async function updateShopMeta(
   };
 }
 
+export async function resetShopPasswordFromAdmin(shopId: string, customPassword?: string) {
+  await verifyAdmin();
+
+  const shop = await prisma.shop.findUnique({
+    where: { id: shopId }
+  });
+
+  if (!shop) {
+    throw new Error("Shop account not found.");
+  }
+
+  // Generate random 8-character password if not provided
+  const newPassword = customPassword && customPassword.trim().length >= 6 
+    ? customPassword.trim() 
+    : Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 90 + 10);
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.shop.update({
+    where: { id: shopId },
+    data: { password: hashedPassword }
+  });
+
+  return {
+    success: true,
+    message: `Password for "${shop.name}" has been reset successfully.`,
+    newPassword: newPassword,
+    ownerEmail: shop.owner_email,
+    shopName: shop.name
+  };
+}
+
 export async function deleteShopFromAdmin(shopId: string) {
   await verifyAdmin();
 

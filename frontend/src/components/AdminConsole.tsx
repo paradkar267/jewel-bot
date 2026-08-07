@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { 
   Store, Gem, Users, History, Plus, Search, 
   ShieldAlert, Edit3, Trash2, X, Loader2, 
-  AlertCircle, CheckCircle2, Shield, Calendar, Phone, Mail
+  AlertCircle, CheckCircle2, Shield, Calendar, Phone, Mail, Key, Copy, Check
 } from 'lucide-react';
-import { createShopFromAdmin, updateShopMeta, deleteShopFromAdmin } from '@/app/actions/admin';
+import { createShopFromAdmin, updateShopMeta, deleteShopFromAdmin, resetShopPasswordFromAdmin } from '@/app/actions/admin';
 
 interface ShopWithCounts {
   id: string;
@@ -43,10 +43,18 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingShop, setEditingShop] = useState<ShopWithCounts | null>(null);
+  const [resetModalData, setResetModalData] = useState<{
+    isOpen: boolean;
+    shopName: string;
+    ownerEmail: string;
+    newPassword: string;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
   
   // Loading states
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState<string | null>(null);
   
   // Messages states
   const [error, setError] = useState('');
@@ -205,6 +213,30 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
       setError(err.message || "Failed to update shop credentials.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle Reset Password
+  const handleResetPassword = async (shopId: string, shopName: string) => {
+    setIsResetting(shopId);
+    setError('');
+    setSuccess('');
+    setCopied(false);
+    try {
+      const result = await resetShopPasswordFromAdmin(shopId);
+      if (result.success && result.newPassword) {
+        setResetModalData({
+          isOpen: true,
+          shopName: result.shopName,
+          ownerEmail: result.ownerEmail || '',
+          newPassword: result.newPassword
+        });
+        setSuccess(`Password for "${shopName}" has been reset.`);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to reset password.");
+    } finally {
+      setIsResetting(null);
     }
   };
 
@@ -428,7 +460,19 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
 
                   {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2.5">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleResetPassword(shop.id, shop.name)}
+                        className="p-2 rounded-xl bg-white/5 hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-400 border border-transparent hover:border-emerald-500/20 transition-all duration-200"
+                        title="Reset Shop Password"
+                        disabled={isResetting === shop.id}
+                      >
+                        {isResetting === shop.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                        ) : (
+                          <Key className="w-4 h-4" />
+                        )}
+                      </button>
                       <button
                         onClick={() => startEdit(shop)}
                         className="p-2 rounded-xl bg-white/5 hover:bg-amber-500/10 text-gray-400 hover:text-amber-500 border border-transparent hover:border-amber-500/20 transition-all duration-200"
@@ -744,6 +788,60 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Reset Result Modal */}
+      {resetModalData && resetModalData.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#111111] border border-emerald-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 relative space-y-4">
+            <button
+              onClick={() => setResetModalData(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/30 text-emerald-400">
+                <Key className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Password Reset Successful</h3>
+                <p className="text-xs text-gray-400">For brand: {resetModalData.shopName}</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-black/60 rounded-xl border border-white/10 space-y-2">
+              <span className="text-xs font-semibold text-gray-400 block">New Login Password:</span>
+              <div className="flex items-center justify-between gap-2 bg-[#182229] px-3 py-2 rounded-lg font-mono text-sm font-bold text-emerald-400 border border-emerald-500/20">
+                <span>{resetModalData.newPassword}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetModalData.newPassword);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="p-1.5 rounded-md hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
+                  title="Copy Password"
+                >
+                  {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-1">Email: <span className="text-gray-300 font-medium">{resetModalData.ownerEmail}</span></p>
+            </div>
+
+            <p className="text-[11px] text-amber-400 bg-amber-950/40 p-2.5 rounded-lg border border-amber-500/20">
+              💡 Share this new password with the shop owner so they can log in to their dashboard at /login.
+            </p>
+
+            <button
+              onClick={() => setResetModalData(null)}
+              className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all"
+            >
+              Done & Close
+            </button>
           </div>
         </div>
       )}
