@@ -18,7 +18,9 @@ export default function AddProductPage() {
   const [formData, setFormData] = useState({
     name: '',
     type: 'ring',
+    customCategory: '',
     metal: 'gold',
+    customMetal: '',
     karat: '22K',
     weight_grams: '',
     price: '',
@@ -85,10 +87,13 @@ export default function AddProductPage() {
       const parsedPrice = formData.price.trim() !== '' ? parseFloat(formData.price) : null;
       const parsedWeight = formData.weight_grams.trim() !== '' ? parseFloat(formData.weight_grams) : null;
 
+      const finalType = formData.type === 'custom' ? (formData.customCategory.trim() || 'Other') : formData.type;
+      const finalMetal = formData.metal === 'custom' ? (formData.customMetal.trim() || 'Other') : formData.metal;
+
       const result = await createProduct({
         name: formData.name,
-        type: formData.type,
-        metal: formData.metal,
+        type: finalType,
+        metal: finalMetal,
         karat: formData.karat,
         weight_grams: parsedWeight,
         price: parsedPrice,
@@ -229,7 +234,16 @@ export default function AddProductPage() {
                     <option value="anklet">Anklet 🦶</option>
                     <option value="bangle">Bangle 🔗</option>
                     <option value="other">Other ✨</option>
+                    <option value="custom">✍️ Type Custom...</option>
                   </select>
+                  {formData.type === 'custom' && (
+                    <input 
+                      type="text" 
+                      value={formData.customCategory} onChange={e => setFormData({...formData, customCategory: e.target.value})}
+                      placeholder="e.g. Brooch, Waist Belt, Kada"
+                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl py-2 px-3 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -243,7 +257,18 @@ export default function AddProductPage() {
                     <option value="platinum">Platinum 💎</option>
                     <option value="rose gold">Rose Gold 🌸</option>
                     <option value="white gold">White Gold ⚪</option>
+                    <option value="copper">Copper ⚙️</option>
+                    <option value="brass">Brass ⚙️</option>
+                    <option value="custom">✍️ Type Custom...</option>
                   </select>
+                  {formData.metal === 'custom' && (
+                    <input 
+                      type="text" 
+                      value={formData.customMetal} onChange={e => setFormData({...formData, customMetal: e.target.value})}
+                      placeholder="e.g. Panchdhatu, Titanium"
+                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl py-2 px-3 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                    />
+                  )}
                 </div>
 
               </div>

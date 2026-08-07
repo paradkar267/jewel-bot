@@ -27,7 +27,9 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
   const [editForm, setEditForm] = useState({
     name: '',
     type: 'ring',
+    customCategory: '',
     metal: 'gold',
+    customMetal: '',
     karat: '22K',
     weight_grams: '',
     making_charge_percent: '',
@@ -37,13 +39,25 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
   });
   const [error, setError] = useState('');
 
+  const standardTypes = ['ring', 'necklace', 'earring', 'bracelet', 'pendant', 'anklet', 'bangle'];
+  const standardMetals = ['gold', 'silver', 'platinum', 'rose gold', 'white gold', 'copper', 'brass'];
+
   // Handle Edit Click
   const startEdit = (product: Product) => {
     setEditingProduct(product);
+    
+    const pType = (product.type || 'ring').toLowerCase();
+    const isStandardType = standardTypes.includes(pType);
+    
+    const pMetal = (product.metal || 'gold').toLowerCase();
+    const isStandardMetal = standardMetals.includes(pMetal);
+
     setEditForm({
       name: product.name,
-      type: product.type || 'ring',
-      metal: product.metal || 'gold',
+      type: isStandardType ? pType : 'custom',
+      customCategory: isStandardType ? '' : (product.type || ''),
+      metal: isStandardMetal ? pMetal : 'custom',
+      customMetal: isStandardMetal ? '' : (product.metal || ''),
       karat: product.karat || '22K',
       weight_grams: product.weight_grams ? String(product.weight_grams) : '',
       making_charge_percent: product.making_charge_percent ? String(product.making_charge_percent) : '',
@@ -89,10 +103,13 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
       const parsedWeight = editForm.weight_grams.trim() !== '' ? parseFloat(editForm.weight_grams) : null;
       const parsedMaking = editForm.making_charge_percent.trim() !== '' ? parseFloat(editForm.making_charge_percent) : null;
 
+      const finalType = editForm.type === 'custom' ? (editForm.customCategory.trim() || 'Other') : editForm.type;
+      const finalMetal = editForm.metal === 'custom' ? (editForm.customMetal.trim() || 'Other') : editForm.metal;
+
       const result = await updateProduct(editingProduct.id, {
         name: editForm.name,
-        type: editForm.type,
-        metal: editForm.metal,
+        type: finalType,
+        metal: finalMetal,
         karat: editForm.karat,
         weight_grams: parsedWeight,
         making_charge_percent: parsedMaking,
@@ -342,7 +359,17 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     <option value="anklet">Anklet 🦶</option>
                     <option value="bangle">Bangle 🔗</option>
                     <option value="other">Other ✨</option>
+                    <option value="custom">✍️ Type Custom...</option>
                   </select>
+                  {editForm.type === 'custom' && (
+                    <input
+                      type="text"
+                      value={editForm.customCategory}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, customCategory: e.target.value }))}
+                      placeholder="e.g. Brooch, Waist Belt, Kada"
+                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl p-2 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -360,7 +387,17 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     <option value="white gold">White Gold ⚪</option>
                     <option value="copper">Copper ⚙️</option>
                     <option value="brass">Brass ⚙️</option>
+                    <option value="custom">✍️ Type Custom...</option>
                   </select>
+                  {editForm.metal === 'custom' && (
+                    <input
+                      type="text"
+                      value={editForm.customMetal}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, customMetal: e.target.value }))}
+                      placeholder="e.g. Panchdhatu, Titanium"
+                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl p-2 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                    />
+                  )}
                 </div>
               </div>
 
