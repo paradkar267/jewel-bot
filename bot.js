@@ -570,7 +570,10 @@ app.post('/webhook', async (req, res) => {
 
       await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
     }
-  });
+  } catch (err) {
+    console.error("   ❌ Webhook processing error:", err.message);
+  }
+});
 
 // ── Webhook Verification (GET request for Meta verification) ───────
 app.get('/webhook', (req, res) => {
