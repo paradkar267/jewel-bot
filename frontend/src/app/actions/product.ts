@@ -126,6 +126,29 @@ export async function deleteProduct(productId: string) {
   return { success: true };
 }
 
+export async function deleteMultipleProducts(productIds: string[]) {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user || !(session.user as any).id) {
+    throw new Error("Not authenticated");
+  }
+
+  const shopId = (session.user as any).id;
+
+  if (!productIds || productIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const result = await prisma.product.deleteMany({
+    where: {
+      id: { in: productIds },
+      shop_id: shopId,
+    },
+  });
+
+  revalidatePath('/dashboard/catalog');
+  return { success: true, count: result.count };
+}
+
 export async function getShopMetalRates() {
   try {
     const session = await getServerSession(authOptions);

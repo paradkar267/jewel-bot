@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Edit3, Trash2, Layers, Tag, X, Upload, Loader2, AlertCircle, ExternalLink, Package, Scale, Sparkles } from 'lucide-react';
-import { updateProduct, deleteProduct } from '@/app/actions/product';
+import { Edit3, Trash2, Layers, Tag, X, Upload, Loader2, AlertCircle, ExternalLink, Package, Scale, Sparkles, CheckSquare, Square, CheckCircle2 } from 'lucide-react';
+import { updateProduct, deleteProduct, deleteMultipleProducts } from '@/app/actions/product';
 
 interface Product {
   id: string;
@@ -21,6 +21,8 @@ interface Product {
 
 export default function CatalogGrid({ initialProducts }: { initialProducts: Product[] }) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -41,6 +43,47 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
 
   const standardTypes = ['ring', 'necklace', 'earring', 'bracelet', 'pendant', 'anklet', 'bangle'];
   const standardMetals = ['gold', 'silver', 'platinum', 'rose gold', 'white gold', 'copper', 'brass'];
+
+  // Toggle selection for a single product
+  const toggleSelectProduct = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  // Toggle select all
+  const toggleSelectAll = () => {
+    if (selectedIds.length === products.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(products.map(p => p.id));
+    }
+  };
+
+  // Handle Bulk Delete
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+    if (!window.confirm(`Are you sure you want to delete ${count} selected jewelry items permanently from your showroom catalog and database?`)) {
+      return;
+    }
+
+    setIsBulkDeleting(true);
+    try {
+      const res = await deleteMultipleProducts(selectedIds);
+      if (res.success) {
+        setProducts(prev => prev.filter(p => !selectedIds.includes(p.id)));
+        setSelectedIds([]);
+      } else {
+        alert("Failed to delete items.");
+      }
+    } catch (err: any) {
+      alert("Error deleting items: " + err.message);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
 
   // Handle Edit Click
   const startEdit = (product: Product) => {
@@ -140,6 +183,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     try {
       await deleteProduct(id);
       setProducts(prev => prev.filter(p => p.id !== id));
+      setSelectedIds(prev => prev.filter(item => item !== id));
     } catch (err: any) {
       alert("Failed to delete product: " + err.message);
     } finally {
@@ -149,6 +193,60 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
 
   return (
     <div>
+      {/* Top Toolbar: Select All & Bulk Action Banner */}
+      {products.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 bg-[#111111] border border-white/5 p-4 rounded-xl">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleSelectAll}
+              className="flex items-center gap-2 text-xs font-bold text-gray-300 hover:text-amber-400 bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-lg transition-all border border-white/5"
+            >
+              {selectedIds.length === products.length ? (
+                <CheckSquare className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Square className="w-4 h-4 text-gray-400" />
+              )}
+              <span>
+                {selectedIds.length === products.length
+                  ? `Deselect All (${products.length})`
+                  : `Select All (${products.length} Items)`}
+              </span>
+            </button>
+
+            {selectedIds.length > 0 && (
+              <span className="text-xs font-medium text-amber-400/90 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">
+                {selectedIds.length} item{selectedIds.length > 1 ? 's' : ''} selected
+              </span>
+            )}
+          </div>
+
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow-lg shadow-red-900/30 transition-all border border-red-500/30 disabled:opacity-50"
+              >
+                {isBulkDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                <span>Delete Selected ({selectedIds.length})</span>
+              </button>
+
+              <button
+                onClick={() => setSelectedIds([])}
+                className="p-2 text-gray-400 hover:text-white bg-white/5 rounded-lg border border-white/5"
+                title="Clear Selection"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Product Grid */}
       {products.length === 0 ? (
         <div className="text-center py-16 bg-[#111111] border border-white/5 rounded-2xl">
@@ -160,353 +258,377 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="bg-[#111111] border border-white/5 rounded-2xl overflow-hidden hover:border-amber-500/30 transition-all duration-300 group flex flex-col justify-between"
-            >
-              <div>
-                {/* Image Section */}
-                <div className="relative h-48 w-full bg-[#0a0a0a] overflow-hidden flex items-center justify-center border-b border-white/5">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="text-gray-600 text-xs font-semibold">No Image Provided</div>
-                  )}
+          {products.map((product) => {
+            const isSelected = selectedIds.includes(product.id);
+            return (
+              <div
+                key={product.id}
+                className={`bg-[#111111] border ${isSelected ? 'border-red-500/80 shadow-lg shadow-red-500/10' : 'border-white/5 hover:border-amber-500/30'} rounded-2xl overflow-hidden transition-all duration-300 group flex flex-col justify-between relative`}
+              >
+                <div>
+                  {/* Image Section */}
+                  <div className="relative h-48 w-full bg-[#0a0a0a] overflow-hidden flex items-center justify-center border-b border-white/5">
+                    {/* Checkbox Overlay Top-Left */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelectProduct(product.id);
+                      }}
+                      className="absolute top-3 left-3 z-10 p-1.5 rounded-lg bg-black/70 hover:bg-black border border-white/20 transition-all shadow-md backdrop-blur-md"
+                      title={isSelected ? "Deselect item" : "Select item for bulk delete"}
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-4 h-4 text-red-500 fill-red-500/20" />
+                      ) : (
+                        <Square className="w-4 h-4 text-gray-400 hover:text-white" />
+                      )}
+                    </button>
 
-                  {/* Metal / Karat Badge */}
-                  <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                    {product.karat && (
-                      <span className="px-2.5 py-1 bg-amber-500/90 text-black text-[10px] font-extrabold rounded-full uppercase shadow-md backdrop-blur-md">
-                        {product.karat}
-                      </span>
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSelected ? 'opacity-80' : ''}`}
+                      />
+                    ) : (
+                      <div className="text-gray-600 text-xs font-semibold">No Image Provided</div>
                     )}
-                    <span className="px-2.5 py-1 bg-black/80 text-amber-300 text-[10px] font-bold rounded-full uppercase border border-amber-500/30 backdrop-blur-md">
-                      {product.metal || 'Gold'}
-                    </span>
-                  </div>
 
-                  {/* Category Badge */}
-                  <div className="absolute top-3 right-3">
-                    <span className="px-2.5 py-1 bg-black/80 text-gray-300 text-[10px] font-medium rounded-full border border-white/10 backdrop-blur-md capitalize">
-                      {product.type || 'Jewelry'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Details Section */}
-                <div className="p-4 space-y-2">
-                  <h3 className="font-bold text-white text-base truncate group-hover:text-amber-400 transition-colors">
-                    {product.name}
-                  </h3>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="text-amber-400 font-extrabold text-lg">
-                      {product.price ? `₹${Number(product.price).toLocaleString('en-IN')}` : 'Ask for Price'}
+                    {/* Metal / Karat Badge */}
+                    <div className="absolute top-3 left-12 flex gap-1.5 flex-wrap z-0">
+                      {product.karat && (
+                        <span className="px-2.5 py-1 bg-amber-500/90 text-black text-[10px] font-extrabold rounded-full uppercase shadow-md backdrop-blur-md">
+                          {product.karat}
+                        </span>
+                      )}
+                      <span className="px-2.5 py-1 bg-black/80 text-amber-300 text-[10px] font-bold rounded-full uppercase border border-amber-500/30 backdrop-blur-md">
+                        {product.metal || 'Gold'}
+                      </span>
                     </div>
 
-                    {product.weight_grams && (
-                      <div className="text-[11px] font-semibold text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg flex items-center gap-1 border border-white/5">
-                        <Scale className="w-3 h-3 text-amber-500" />
-                        <span>{Number(product.weight_grams)}g</span>
+                    {/* Category Badge */}
+                    <div className="absolute top-3 right-3">
+                      <span className="px-2.5 py-1 bg-black/80 text-gray-300 text-[10px] font-medium rounded-full border border-white/10 backdrop-blur-md capitalize">
+                        {product.type || 'Jewelry'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Details Section */}
+                  <div className="p-4 space-y-2">
+                    <h3 className="font-bold text-white text-base truncate group-hover:text-amber-400 transition-colors">
+                      {product.name}
+                    </h3>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="text-amber-400 font-extrabold text-lg">
+                        {product.price ? `₹${Number(product.price).toLocaleString('en-IN')}` : 'Ask for Price'}
                       </div>
-                    )}
+
+                      {product.weight_grams && (
+                        <div className="text-[11px] font-semibold text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg flex items-center gap-1 border border-white/5">
+                          <Scale className="w-3 h-3 text-amber-500" />
+                          <span>{Number(product.weight_grams)}g</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Actions Footer */}
+                <div className="px-4 py-3 bg-[#0a0a0a]/50 border-t border-white/5 flex items-center justify-between text-xs">
+                  {product.url ? (
+                    <a
+                      href={product.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-amber-400 flex items-center font-medium transition-colors text-[11px]"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      View Store Page
+                    </a>
+                  ) : (
+                    <span className="text-[10px] text-gray-600">No URL</span>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => startEdit(product)}
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition-all border border-transparent hover:border-amber-500/30"
+                      title="Edit Item"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(product.id, product.name)}
+                      disabled={isDeleting === product.id}
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
+                      title="Delete Item"
+                    >
+                      {isDeleting === product.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
-
-              {/* Card Actions Footer */}
-              <div className="px-4 py-3 bg-[#0a0a0a]/50 border-t border-white/5 flex items-center justify-between text-xs">
-                {product.url ? (
-                  <a
-                    href={product.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-amber-400 flex items-center font-medium transition-colors text-[11px]"
-                  >
-                    <ExternalLink className="w-3 h-3 mr-1" />
-                    View Store Page
-                  </a>
-                ) : (
-                  <span className="text-[10px] text-gray-600">No URL</span>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => startEdit(product)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition-all border border-transparent hover:border-amber-500/30"
-                    title="Edit Item"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(product.id, product.name)}
-                    disabled={isDeleting === product.id}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
-                    title="Delete Item"
-                  >
-                    {isDeleting === product.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Edit Jewelry Modal */}
+      {/* Edit Product Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-[#111111] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#111111] border border-amber-500/20 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
             
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-[#0a0a0a]">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Edit3 className="w-4 h-4 text-amber-500" />
-                  Edit Jewelry Item
-                </h3>
-                <p className="text-xs text-gray-400">Update details & purity for "{editingProduct.name}"</p>
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-amber-400" />
+                <h2 className="text-lg font-bold text-white">Edit Jewelry Details</h2>
               </div>
               <button
                 onClick={() => setEditingProduct(null)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all"
+                className="p-1 text-gray-400 hover:text-white rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form onSubmit={handleSaveEdit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-              
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-xs">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
-              {/* Jewelry Name & Price */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Jewelry Name *</label>
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-bold"
-                    placeholder="e.g. Kundan Gold Necklace"
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Estimated Price (₹)</label>
-                  <input
-                    type="number"
-                    value={editForm.price}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-amber-400 font-extrabold focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
-                    placeholder="Auto-calculated or Manual"
-                    disabled={isSaving}
-                  />
-                </div>
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              {/* Product Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  Jewelry Name *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  placeholder="e.g. Royal 22K Kundan Gold Necklace"
+                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50"
+                  required
+                />
               </div>
 
-              {/* Karat / Purity & Metal */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Category & Custom Category Selection */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-amber-400 mb-1.5">Karat / Purity ✨</label>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                    Category (Type)
+                  </label>
                   <select
-                    value={editForm.karat}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, karat: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-2.5 text-white font-bold focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs cursor-pointer"
-                    disabled={isSaving}
+                    value={editForm.type}
+                    onChange={e => setEditForm({ ...editForm, type: e.target.value })}
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 capitalize"
                   >
-                    <option value="22K">22K Gold (916 Purity) 👑</option>
-                    <option value="18K">18K Gold (750 Purity) 💎</option>
-                    <option value="14K">14K Gold (585 Purity) ✨</option>
-                    <option value="24K">24K Gold (999 Pure) 🥇</option>
-                    <option value="925 Silver">925 Sterling Silver 🥈</option>
-                    <option value="999 Silver">999 Pure Silver ⚪</option>
-                    <option value="Fashion">Fashion / Imitation 🌸</option>
+                    {standardTypes.map(t => (
+                      <option key={t} value={t} className="bg-black text-white capitalize">{t}</option>
+                    ))}
+                    <option value="custom" className="bg-black text-amber-400 font-bold">✍️ Type Custom Category...</option>
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Category</label>
-                  <select
-                    value={editForm.type}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs cursor-pointer"
-                    disabled={isSaving}
-                  >
-                    <option value="ring">Ring 💍</option>
-                    <option value="necklace">Necklace 📿</option>
-                    <option value="earring">Earring 👂</option>
-                    <option value="bracelet">Bracelet ⌚</option>
-                    <option value="pendant">Pendant 🔮</option>
-                    <option value="anklet">Anklet 🦶</option>
-                    <option value="bangle">Bangle 🔗</option>
-                    <option value="other">Other ✨</option>
-                    <option value="custom">✍️ Type Custom...</option>
-                  </select>
-                  {editForm.type === 'custom' && (
+                {editForm.type === 'custom' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-amber-400 mb-1">
+                      Type Custom Category Name
+                    </label>
                     <input
                       type="text"
                       value={editForm.customCategory}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, customCategory: e.target.value }))}
-                      placeholder="e.g. Brooch, Waist Belt, Kada"
-                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl p-2 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                      onChange={e => setEditForm({ ...editForm, customCategory: e.target.value })}
+                      placeholder="e.g. Brooch, Kamarbandh, Panchdhatu"
+                      className="w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500"
+                      required
                     />
-                  )}
-                </div>
+                  </div>
+                )}
+              </div>
 
+              {/* Metal & Karat Selection */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Metal Material</label>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                    Metal
+                  </label>
                   <select
                     value={editForm.metal}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, metal: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs cursor-pointer"
-                    disabled={isSaving}
+                    onChange={e => setEditForm({ ...editForm, metal: e.target.value })}
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 capitalize"
                   >
-                    <option value="gold">Gold 🥇</option>
-                    <option value="silver">Silver 🥈</option>
-                    <option value="platinum">Platinum 💎</option>
-                    <option value="rose gold">Rose Gold 🌸</option>
-                    <option value="white gold">White Gold ⚪</option>
-                    <option value="copper">Copper ⚙️</option>
-                    <option value="brass">Brass ⚙️</option>
-                    <option value="custom">✍️ Type Custom...</option>
+                    {standardMetals.map(m => (
+                      <option key={m} value={m} className="bg-black text-white capitalize">{m}</option>
+                    ))}
+                    <option value="custom" className="bg-black text-amber-400 font-bold">✍️ Type Custom Metal...</option>
                   </select>
-                  {editForm.metal === 'custom' && (
+                </div>
+
+                {editForm.metal === 'custom' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-amber-400 mb-1">
+                      Type Custom Metal Name
+                    </label>
                     <input
                       type="text"
                       value={editForm.customMetal}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, customMetal: e.target.value }))}
-                      placeholder="e.g. Panchdhatu, Titanium"
-                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl p-2 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                      onChange={e => setEditForm({ ...editForm, customMetal: e.target.value })}
+                      placeholder="e.g. Rose Gold, Panchdhatu"
+                      className="w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500"
+                      required
                     />
-                  )}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                    Karat (Purity)
+                  </label>
+                  <select
+                    value={editForm.karat}
+                    onChange={e => setEditForm({ ...editForm, karat: e.target.value })}
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                  >
+                    <option value="24K" className="bg-black text-white">24K (99.9% Pure)</option>
+                    <option value="22K" className="bg-black text-white">22K (91.6% Hallmark)</option>
+                    <option value="18K" className="bg-black text-white">18K (75.0% Gold)</option>
+                    <option value="14K" className="bg-black text-white">14K (58.3% Gold)</option>
+                    <option value="10K" className="bg-black text-white">10K Gold</option>
+                    <option value="925" className="bg-black text-white">925 Sterling Silver</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Weight in Grams & Making Charges % */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Weight, Making Charges & Calculated Price */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Weight (in Grams)</label>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1">
+                    <Scale className="w-3 h-3 text-amber-400" /> Weight (Grams)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     value={editForm.weight_grams}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, weight_grams: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-bold"
-                    placeholder="e.g. 8.5"
-                    disabled={isSaving}
+                    onChange={e => setEditForm({ ...editForm, weight_grams: e.target.value })}
+                    placeholder="e.g. 10.5"
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Making Charge (%)</label>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                    Making Charge (%)
+                  </label>
                   <input
                     type="number"
+                    step="0.1"
                     value={editForm.making_charge_percent}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, making_charge_percent: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
-                    placeholder="Default shop %"
-                    disabled={isSaving}
+                    onChange={e => setEditForm({ ...editForm, making_charge_percent: e.target.value })}
+                    placeholder="e.g. 12"
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-amber-400 mb-1">
+                    Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.price}
+                    onChange={e => setEditForm({ ...editForm, price: e.target.value })}
+                    placeholder="e.g. 154000"
+                    className="w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
 
-              {/* Purchase URL */}
+              {/* Store Product URL */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Purchase URL</label>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  Product Link (Buy URL)
+                </label>
                 <input
                   type="url"
                   value={editForm.url}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, url: e.target.value }))}
-                  placeholder="https://example.com/shop/ring"
-                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
-                  disabled={isSaving}
+                  onChange={e => setEditForm({ ...editForm, url: e.target.value })}
+                  placeholder="https://yourstore.com/item/123"
+                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50"
                 />
               </div>
 
-              {/* Image Upload */}
+              {/* Image Preview & File Upload */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Jewelry Image</label>
-                <div className="border border-dashed border-white/10 rounded-xl p-3 flex items-center justify-between bg-white/[0.01] hover:bg-white/[0.02] transition-all cursor-pointer relative min-h-16">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    disabled={isSaving}
-                  />
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  Jewelry Photo
+                </label>
+                
+                <div className="flex items-center gap-4">
                   {editForm.image_url ? (
-                    <div className="flex items-center gap-3 w-full justify-between">
-                      <div className="flex items-center gap-2">
-                        <img src={editForm.image_url} className="h-10 w-10 rounded object-cover border border-white/10" alt="Preview" />
-                        <span className="text-[10px] text-gray-400 truncate max-w-48">Image loaded successfully</span>
-                      </div>
+                    <div className="relative h-16 w-16 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+                      <img src={editForm.image_url} alt="Preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditForm(prev => ({ ...prev, image_url: null }));
-                        }}
-                        className="text-[10px] font-bold text-red-500 hover:text-red-400"
+                        onClick={() => setEditForm({ ...editForm, image_url: null })}
+                        className="absolute top-0.5 right-0.5 p-0.5 bg-black/80 rounded-full text-red-400"
                       >
-                        Remove
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-gray-400 text-xs">
-                      <Upload className="w-4 h-4 text-amber-500/80" />
-                      <span>Click to upload new image (max 2MB)</span>
+                    <div className="h-16 w-16 rounded-xl bg-[#0a0a0a] border border-dashed border-white/20 flex items-center justify-center text-gray-500 text-[10px] text-center p-1">
+                      No Image
                     </div>
                   )}
+
+                  <label className="flex-1 cursor-pointer bg-[#0a0a0a] border border-white/10 hover:border-amber-500/40 rounded-xl p-3 flex items-center justify-center gap-2 text-xs font-semibold text-gray-300 hover:text-amber-400 transition-colors">
+                    <Upload className="w-4 h-4 text-amber-500" />
+                    <span>Upload New Photo (Max 2MB)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
+              {/* Form Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-gray-300 hover:bg-white/5 transition-all"
-                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold text-xs transition-colors"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg text-xs font-bold text-[#0a0a0a] bg-amber-500 hover:bg-amber-400 transition-all flex items-center shadow-[0_0_10px_rgba(251,191,36,0.1)]"
                   disabled={isSaving}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-xs shadow-lg shadow-amber-500/20 transition-all border border-amber-400/30 disabled:opacity-50"
                 >
                   {isSaving ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                      Saving...
-                    </>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    'Save Changes'
+                    <Edit3 className="w-4 h-4" />
                   )}
+                  <span>Save Changes</span>
                 </button>
               </div>
-
             </form>
-
           </div>
         </div>
       )}
