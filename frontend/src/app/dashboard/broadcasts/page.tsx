@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from 'next/navigation';
 import { History, CheckCircle2, XCircle, Megaphone, MessageSquare } from 'lucide-react';
 import BroadcastsTable from '@/components/BroadcastsTable';
+import BroadcastHeaderActions from '@/components/BroadcastHeaderActions';
 
 export default async function BroadcastsPage() {
   const session = await getServerSession(authOptions);
@@ -13,6 +14,12 @@ export default async function BroadcastsPage() {
   }
 
   const shopId = (session.user as any).id;
+
+  // Fetch shop details
+  const shop = await prisma.shop.findUnique({
+    where: { id: shopId },
+    select: { gold_rate_per_gram: true }
+  });
 
   // Fetch campaigns
   const campaigns = await prisma.broadcastCampaign.findMany({
@@ -26,18 +33,24 @@ export default async function BroadcastsPage() {
   const totalSuccess = campaigns.reduce((acc, c) => acc + c.success_count, 0);
   const averageSuccessRate = totalSent > 0 ? Math.round((totalSuccess / totalSent) * 100) : 0;
 
+  const currentGoldRate = shop?.gold_rate_per_gram ? Number(shop.gold_rate_per_gram) : 13750;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">
       
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-white flex items-center tracking-tight">
-          <History className="h-8 w-8 text-amber-500 mr-3" />
-          Broadcast History
-        </h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Track and review all marketing and transactional broadcasts sent to your WhatsApp subscribers.
-        </p>
+      {/* Page Header & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-white flex items-center tracking-tight">
+            <History className="h-8 w-8 text-amber-500 mr-3" />
+            Broadcast History
+          </h1>
+          <p className="mt-2 text-sm text-gray-400">
+            Track and review all marketing, promotional, and Gold Rate price-drop alerts sent to your customers.
+          </p>
+        </div>
+
+        <BroadcastHeaderActions currentGoldRate={currentGoldRate} />
       </div>
 
       {/* Analytics Cards */}
