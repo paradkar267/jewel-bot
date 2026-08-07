@@ -223,6 +223,13 @@ export default function SettingsPage() {
                 </div>
               )}
 
+              {/* System Mandatory Footer (Locked & Protected) */}
+              <div className="bg-[#182229] text-gray-300 p-2.5 rounded-xl border border-emerald-500/30 text-[10px] space-y-1">
+                <p className="font-semibold text-emerald-400">📸 Send a photo or type what you are looking for!</p>
+                <p className="text-gray-400">ℹ️ Daily Limit: 0/5 used today.</p>
+                <span className="text-[9px] text-emerald-500 font-bold block pt-1 border-t border-white/5">🔒 System Mandate (API Cost Protection)</span>
+              </div>
+
             </div>
           </div>
         </div>
