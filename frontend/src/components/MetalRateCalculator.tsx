@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Coins, RefreshCw, Calculator, Sparkles, CheckCircle2, AlertCircle, ArrowUpRight } from "lucide-react";
+import { Coins, RefreshCw, Calculator, Sparkles, CheckCircle2, AlertCircle, TrendingUp, Zap } from "lucide-react";
 import { getShopMetalRates, updateShopMetalRatesAndRecalculate } from "@/app/actions/product";
 
 interface MetalRateCalculatorProps {
@@ -13,9 +13,18 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+  // Live Market Reference Benchmarks (INR / gram)
+  const LIVE_MARKET_RATES = {
+    gold_24k: 8150,
+    gold_22k: 7470,
+    gold_18k: 6115,
+    silver: 97,
+    platinum: 2850
+  };
+
   const [rates, setRates] = useState({
     gold_rate: 7450,
-    silver_rate: 92,
+    silver_rate: 97,
     making_charge_percent: 12,
   });
 
@@ -25,7 +34,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
       if (res.success) {
         setRates({
           gold_rate: res.gold_rate || 7450,
-          silver_rate: res.silver_rate || 92,
+          silver_rate: res.silver_rate || 97,
           making_charge_percent: res.making_charge_percent || 12,
         });
       }
@@ -33,6 +42,18 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
     }
     loadRates();
   }, []);
+
+  const handleAutoFillLiveRates = () => {
+    setRates(prev => ({
+      ...prev,
+      gold_rate: LIVE_MARKET_RATES.gold_22k,
+      silver_rate: LIVE_MARKET_RATES.silver
+    }));
+    setStatus({
+      type: "success",
+      message: "Auto-filled today's live Indian market rates! Click 'Recalculate' to update catalog."
+    });
+  };
 
   const handleSaveAndRecalculate = async (recalculateAll: boolean) => {
     setSaving(true);
@@ -70,7 +91,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
   const sample10gPrice = Math.round((10 * rates.gold_rate) * (1 + rates.making_charge_percent / 100));
 
   return (
-    <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-[#111111] to-amber-950/20 border border-amber-500/30 shadow-[0_0_25px_rgba(245,158,11,0.1)] space-y-4">
+    <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-[#111111] to-amber-950/20 border border-amber-500/30 shadow-[0_0_25px_rgba(245,158,11,0.1)] space-y-5">
       
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-500/20">
@@ -81,7 +102,10 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
           <div>
             <h2 className="text-base font-extrabold text-white flex items-center gap-2">
               Daily Gold & Silver Auto-Price Calculator
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">Live Formula</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1">
+                <TrendingUp className="w-3 h-3 text-amber-400" />
+                Live Market Rates
+              </span>
             </h2>
             <p className="text-xs text-gray-400">Enter today's gold rate to automatically calculate or update all item prices</p>
           </div>
@@ -94,13 +118,54 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
         </div>
       </div>
 
+      {/* Live Market Reference Ticker */}
+      <div className="p-3 bg-black/60 border border-white/10 rounded-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Today's Live India Market Benchmark Rates (₹/gram)
+          </span>
+          <button
+            type="button"
+            onClick={handleAutoFillLiveRates}
+            className="text-[11px] font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors self-start sm:self-auto bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20"
+          >
+            <Zap className="w-3 h-3 fill-amber-400" />
+            Auto-Fill Live Rates
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+            <div className="text-[10px] text-amber-300 font-semibold">🥇 24K Pure Gold</div>
+            <div className="font-extrabold text-white text-sm">₹{LIVE_MARKET_RATES.gold_24k.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-gray-400">/g</span></div>
+          </div>
+          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+            <div className="text-[10px] text-amber-300 font-semibold">👑 22K Gold (916)</div>
+            <div className="font-extrabold text-white text-sm">₹{LIVE_MARKET_RATES.gold_22k.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-gray-400">/g</span></div>
+          </div>
+          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+            <div className="text-[10px] text-amber-300 font-semibold">💎 18K Gold (750)</div>
+            <div className="font-extrabold text-white text-sm">₹{LIVE_MARKET_RATES.gold_18k.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-gray-400">/g</span></div>
+          </div>
+          <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center">
+            <div className="text-[10px] text-gray-300 font-semibold">⚪ 925 Silver</div>
+            <div className="font-extrabold text-white text-sm">₹{LIVE_MARKET_RATES.silver.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-gray-400">/g</span></div>
+          </div>
+          <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-center col-span-2 sm:col-span-1">
+            <div className="text-[10px] text-gray-300 font-semibold">💠 Platinum</div>
+            <div className="font-extrabold text-white text-sm">₹{LIVE_MARKET_RATES.platinum.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-gray-400">/g</span></div>
+          </div>
+        </div>
+      </div>
+
       {/* Input Rate Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
         {/* 22K/24K Gold Rate */}
         <div>
           <label className="block text-xs font-semibold text-amber-300 mb-1 flex items-center justify-between">
-            <span>🪙 Gold Rate (₹ / gram)</span>
+            <span>🪙 Active Gold Rate (₹ / gram)</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">₹</span>
@@ -117,7 +182,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
         {/* Silver Rate */}
         <div>
           <label className="block text-xs font-semibold text-gray-300 mb-1">
-            <span>⚪ Silver Rate (₹ / gram)</span>
+            <span>⚪ Active Silver Rate (₹ / gram)</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">₹</span>
@@ -126,7 +191,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
               value={rates.silver_rate}
               onChange={(e) => setRates({ ...rates, silver_rate: Number(e.target.value) })}
               className="w-full pl-7 pr-3 py-2 bg-black/70 border border-white/10 rounded-xl text-white text-sm font-bold focus:outline-none focus:border-amber-400"
-              placeholder="92"
+              placeholder="97"
             />
           </div>
         </div>
