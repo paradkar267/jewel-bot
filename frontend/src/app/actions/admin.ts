@@ -71,6 +71,9 @@ export async function createShopFromAdmin(data: {
   password?: string;
   metaPhoneNumberId?: string;
   metaAccessToken?: string;
+  storeAddress?: string;
+  customGreeting?: string;
+  promoBanner?: string;
 }) {
   await verifyAdmin();
 
@@ -99,12 +102,15 @@ export async function createShopFromAdmin(data: {
 
   const shop = await prisma.shop.create({
     data: {
-      name: data.name,
-      whatsapp_number: data.whatsappNumber,
-      owner_email: data.ownerEmail,
+      name: data.name.trim(),
+      whatsapp_number: data.whatsappNumber.trim(),
+      owner_email: data.ownerEmail.trim(),
       password: hashedPassword,
-      meta_phone_number_id: data.metaPhoneNumberId || null,
-      meta_access_token: data.metaAccessToken || null
+      meta_phone_number_id: data.metaPhoneNumberId?.trim() || null,
+      meta_access_token: data.metaAccessToken?.trim() || null,
+      store_address: data.storeAddress?.trim() || null,
+      custom_greeting: data.customGreeting?.trim() || null,
+      promo_banner: data.promoBanner?.trim() || null,
     }
   });
 
@@ -123,8 +129,11 @@ export async function updateShopMeta(
     name: string;
     whatsappNumber: string;
     ownerEmail: string;
-    metaPhoneNumberId: string;
+    metaPhoneNumberId?: string;
     metaAccessToken?: string;
+    storeAddress?: string;
+    customGreeting?: string;
+    promoBanner?: string;
   }
 ) {
   await verifyAdmin();
@@ -153,11 +162,14 @@ export async function updateShopMeta(
   const updated = await prisma.shop.update({
     where: { id: shopId },
     data: {
-      name: data.name,
-      whatsapp_number: data.whatsappNumber,
-      owner_email: data.ownerEmail,
-      meta_phone_number_id: data.metaPhoneNumberId || null,
-      meta_access_token: data.metaAccessToken || null
+      name: data.name.trim(),
+      whatsapp_number: data.whatsappNumber.trim(),
+      owner_email: data.ownerEmail.trim(),
+      meta_phone_number_id: data.metaPhoneNumberId?.trim() || null,
+      meta_access_token: data.metaAccessToken?.trim() || null,
+      store_address: data.storeAddress?.trim() || null,
+      custom_greeting: data.customGreeting?.trim() || null,
+      promo_banner: data.promoBanner?.trim() || null,
     }
   });
 

@@ -15,6 +15,9 @@ interface ShopWithCounts {
   owner_email: string | null;
   meta_phone_number_id: string | null;
   meta_access_token?: string | null;
+  store_address?: string | null;
+  custom_greeting?: string | null;
+  promo_banner?: string | null;
   created_at: string;
   _count: {
     products: number;
@@ -56,7 +59,10 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
     ownerEmail: '',
     password: '',
     metaPhoneNumberId: '',
-    metaAccessToken: ''
+    metaAccessToken: '',
+    storeAddress: '',
+    customGreeting: '',
+    promoBanner: ''
   });
 
   const [editForm, setEditForm] = useState({
@@ -64,7 +70,10 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
     whatsappNumber: '',
     ownerEmail: '',
     metaPhoneNumberId: '',
-    metaAccessToken: ''
+    metaAccessToken: '',
+    storeAddress: '',
+    customGreeting: '',
+    promoBanner: ''
   });
 
   // Filtered Shops
@@ -98,13 +107,19 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
         ownerEmail: addForm.ownerEmail,
         password: addForm.password || undefined,
         metaPhoneNumberId: addForm.metaPhoneNumberId || undefined,
-        metaAccessToken: addForm.metaAccessToken || undefined
+        metaAccessToken: addForm.metaAccessToken || undefined,
+        storeAddress: addForm.storeAddress || undefined,
+        customGreeting: addForm.customGreeting || undefined,
+        promoBanner: addForm.promoBanner || undefined,
       });
 
       if (result.success && result.shop) {
         const newShop: ShopWithCounts = {
           ...result.shop,
           meta_access_token: (result.shop as any).meta_access_token || null,
+          store_address: (result.shop as any).store_address || null,
+          custom_greeting: (result.shop as any).custom_greeting || null,
+          promo_banner: (result.shop as any).promo_banner || null,
           _count: { products: 0, leads: 0, broadcasts: 0 }
         };
         setShops(prev => [newShop, ...prev]);
@@ -115,7 +130,10 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
           ownerEmail: '',
           password: '',
           metaPhoneNumberId: '',
-          metaAccessToken: ''
+          metaAccessToken: '',
+          storeAddress: '',
+          customGreeting: '',
+          promoBanner: ''
         });
         setIsAddModalOpen(false);
       }
@@ -134,7 +152,10 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
       whatsappNumber: shop.whatsapp_number || '',
       ownerEmail: shop.owner_email || '',
       metaPhoneNumberId: shop.meta_phone_number_id || '',
-      metaAccessToken: (shop as any).meta_access_token || ''
+      metaAccessToken: (shop as any).meta_access_token || '',
+      storeAddress: shop.store_address || '',
+      customGreeting: shop.custom_greeting || '',
+      promoBanner: shop.promo_banner || ''
     });
     setError('');
     setSuccess('');
@@ -159,7 +180,10 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
         whatsappNumber: editForm.whatsappNumber,
         ownerEmail: editForm.ownerEmail,
         metaPhoneNumberId: editForm.metaPhoneNumberId,
-        metaAccessToken: editForm.metaAccessToken
+        metaAccessToken: editForm.metaAccessToken,
+        storeAddress: editForm.storeAddress,
+        customGreeting: editForm.customGreeting,
+        promoBanner: editForm.promoBanner,
       });
 
       if (result.success && result.shop) {
@@ -169,7 +193,10 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
           whatsapp_number: result.shop.whatsapp_number,
           owner_email: result.shop.owner_email,
           meta_phone_number_id: result.shop.meta_phone_number_id,
-          meta_access_token: (result.shop as any).meta_access_token || null
+          meta_access_token: (result.shop as any).meta_access_token || null,
+          store_address: (result.shop as any).store_address || null,
+          custom_greeting: (result.shop as any).custom_greeting || null,
+          promo_banner: (result.shop as any).promo_banner || null,
         } : s));
         setSuccess(`Updated details for "${editForm.name}" successfully.`);
         setEditingShop(null);
@@ -650,6 +677,47 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                 </div>
               </div>
               <span className="text-[10px] text-gray-500 mt-1 block">Specify the Meta ID & Token required for this brand's WhatsApp Cloud API.</span>
+
+              {/* Showroom Location & Bot Customizations */}
+              <div className="pt-3 border-t border-white/5 space-y-3">
+                <h4 className="text-xs font-bold text-amber-400">📍 Showroom & Bot Settings</h4>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Showroom Location / Store Address</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Shop 12, Zaveri Bazaar, Mumbai. Map: https://maps.google.com/..."
+                    value={editForm.storeAddress}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, storeAddress: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Custom Bot Welcome Greeting</label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Welcome to Royal Jewelers! Send us a photo of any design..."
+                    value={editForm.customGreeting}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, customGreeting: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Special Festival Offer Banner</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. FESTIVE10: 10% OFF on Making Charges!"
+                    value={editForm.promoBanner}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, promoBanner: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
+                    disabled={isSaving}
+                  />
+                </div>
+              </div>
 
               <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
                 <button
