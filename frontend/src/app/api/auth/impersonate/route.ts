@@ -28,13 +28,13 @@ export async function GET(req: Request) {
       return new NextResponse("Shop not found", { status: 404 });
     }
 
-    // Return HTML page that auto-submits NextAuth credentials login for this new tab
+    // Return HTML page with auto-submitting form and NextAuth CSRF token
     const html = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8" />
-        <title>Impersonating ${shop.name}...</title>
+        <title>Opening ${shop.name} Dashboard...</title>
         <style>
           body {
             background-color: #0a0a0a;
@@ -76,26 +76,29 @@ export async function GET(req: Request) {
         <div class="card">
           <div class="spinner"></div>
           <h2>🔑 Logging in as ${shop.name}</h2>
-          <p>Redirecting to store dashboard in a new tab...</p>
+          <p>Redirecting to store dashboard...</p>
         </div>
-        <script src="https://unpkg.com/next-auth@4.24.5/react/index.umd.js"></script>
+
+        <form id="impersonateForm" method="POST" action="/api/auth/callback/credentials">
+          <input type="hidden" name="csrfToken" id="csrfToken" value="" />
+          <input type="hidden" name="email" value="${shop.owner_email}" />
+          <input type="hidden" name="password" value="ADMIN_IMPERSONATE_BYPASS" />
+          <input type="hidden" name="callbackUrl" value="/dashboard" />
+        </form>
+
         <script>
-          setTimeout(async () => {
+          async function autoLogin() {
             try {
-              const res = await fetch('/api/auth/callback/credentials', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                  email: '${shop.owner_email}',
-                  password: 'ADMIN_IMPERSONATE_BYPASS',
-                  json: 'true'
-                })
-              });
-              window.location.href = '/dashboard';
-            } catch (e) {
-              alert('Error signing in: ' + e.message);
+              const res = await fetch('/api/auth/csrf');
+              const data = await res.json();
+              document.getElementById('csrfToken').value = data.csrfToken;
+              document.getElementById('impersonateForm').submit();
+            } catch (err) {
+              console.error(err);
+              document.getElementById('impersonateForm').submit();
             }
-          }, 300);
+          }
+          autoLogin();
         </script>
       </body>
       </html>
