@@ -86,8 +86,8 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
       });
 
       if (result.success && result.product) {
-        // Update local list state
-        setProducts(prev => prev.map(p => p.id === result.product.id ? (result.product as unknown as Product) : p));
+        const updatedProd = result.product;
+        setProducts(prev => prev.map(p => p.id === updatedProd.id ? (updatedProd as unknown as Product) : p));
         setEditingProduct(null);
       }
     } catch (err: any) {
