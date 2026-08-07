@@ -61,7 +61,7 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
     try {
       const data = await prisma.shop.findFirst({
         where: { meta_phone_number_id: metaPhoneNumberId },
-        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true }
+        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true, is_active: true }
       });
       if (data) {
         console.log(`   [DEBUG] Found shop by meta_phone_number_id!`);
@@ -79,7 +79,7 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
         where: {
           whatsapp_number: { contains: cleanPhone }
         },
-        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true }
+        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true, is_active: true }
       });
       if (data) {
         console.log(`   [DEBUG] Found shop by phone number!`);
@@ -94,7 +94,7 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
   try {
     const shops = await prisma.shop.findMany({
       take: 2,
-      select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true }
+      select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true, is_active: true }
     });
     if (shops.length === 1) {
       console.log(`   [DEBUG] Fallback: Auto-assigning single existing shop: ${shops[0].name}`);
@@ -425,10 +425,23 @@ app.post('/webhook', async (req, res) => {
         session.customGreeting = shop.custom_greeting;
         session.storeAddress = shop.store_address;
         session.promoBanner = shop.promo_banner;
-        console.log(`   🛒 Assigned to shop: ${shop.name}`);
+        session.isActive = shop.is_active !== false;
+        console.log(`   🛒 Assigned to shop: ${shop.name} (Active: ${session.isActive})`);
       } else {
         console.log(`   ❌ FAILED to assign shop! session.shopId is NULL`);
       }
+    }
+
+    // Block processing if shop account is SUSPENDED
+    if (session.isActive === false) {
+      console.log(`   🛑 Message blocked for SUSPENDED shop account: ${session.shopName || session.shopId}`);
+      await sendWhatsAppReply(
+        phone,
+        `⚠️ *Service Temporarily Suspended*\n\nThis business WhatsApp AI bot is currently suspended. Please contact platform administration to renew your subscription.`,
+        session.metaPhoneNumberId,
+        session.metaAccessToken
+      );
+      return;
     }
 
     // Track the lead CRM

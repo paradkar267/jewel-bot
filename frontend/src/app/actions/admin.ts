@@ -111,6 +111,7 @@ export async function createShopFromAdmin(data: {
       store_address: data.storeAddress?.trim() || null,
       custom_greeting: data.customGreeting?.trim() || null,
       promo_banner: data.promoBanner?.trim() || null,
+      is_active: true
     }
   });
 
@@ -179,6 +180,21 @@ export async function updateShopMeta(
       ...updated,
       created_at: updated.created_at.toISOString()
     }
+  };
+}
+
+export async function toggleShopStatusByAdmin(shopId: string, isActive: boolean) {
+  await verifyAdmin();
+
+  const updated = await prisma.shop.update({
+    where: { id: shopId },
+    data: { is_active: isActive }
+  });
+
+  return { 
+    success: true, 
+    message: `Shop account status changed to ${isActive ? 'ACTIVE' : 'SUSPENDED'}.`,
+    is_active: updated.is_active
   };
 }
 

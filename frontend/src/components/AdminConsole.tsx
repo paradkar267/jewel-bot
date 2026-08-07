@@ -5,9 +5,9 @@ import {
   Store, Gem, Users, History, Plus, Search, 
   ShieldAlert, Edit3, Trash2, X, Loader2, 
   AlertCircle, CheckCircle2, Shield, Calendar, Phone, Mail,
-  KeyRound, Eye, EyeOff, Lock, RefreshCw
+  KeyRound, Eye, EyeOff, Lock, RefreshCw, Power, Ban, CheckCircle
 } from 'lucide-react';
-import { createShopFromAdmin, updateShopMeta, deleteShopFromAdmin, resetShopPasswordByAdmin } from '@/app/actions/admin';
+import { createShopFromAdmin, updateShopMeta, deleteShopFromAdmin, resetShopPasswordByAdmin, toggleShopStatusByAdmin } from '@/app/actions/admin';
 
 interface ShopWithCounts {
   id: string;
@@ -19,6 +19,7 @@ interface ShopWithCounts {
   store_address?: string | null;
   custom_greeting?: string | null;
   promo_banner?: string | null;
+  is_active?: boolean;
   created_at: string;
   _count: {
     products: number;
@@ -239,6 +240,32 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
     }
   };
 
+  // Handle Toggle Shop Status (Active vs Suspended)
+  const handleToggleStatus = async (shopId: string, currentStatus: boolean | undefined) => {
+    const targetStatus = currentStatus === false ? true : false;
+    const actionText = targetStatus ? "ACTIVATE" : "SUSPEND";
+    
+    if (!window.confirm(`Are you sure you want to ${actionText} this shop bot account?`)) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await toggleShopStatusByAdmin(shopId, targetStatus);
+      if (res.success) {
+        setShops(prev => prev.map(s => s.id === shopId ? { ...s, is_active: targetStatus } : s));
+        setSuccess(res.message);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to update status.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Handle Delete Shop
   const handleDeleteShop = async (shopId: string, shopName: string) => {
     if (!window.confirm(`CRITICAL WARNING: Are you sure you want to permanently delete "${shopName}"? This will delete all catalog items, customers, and history for this business.`)) {
@@ -386,6 +413,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
             <thead className="bg-[#0a0a0a]/50 text-left">
               <tr>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Brand Information</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Credentials</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Meta API Phone ID</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Metrics</th>
@@ -410,6 +438,21 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                         </div>
                       </div>
                     </div>
+                  </td>
+
+                  {/* Status Badge */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {shop.is_active !== false ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        ACTIVE
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        <Ban className="w-3 h-3" />
+                        SUSPENDED
+                      </span>
+                    )}
                   </td>
 
                   {/* Contact Credentials */}
@@ -460,6 +503,17 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                   {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleToggleStatus(shop.id, shop.is_active)}
+                        className={`p-2 rounded-xl transition-all duration-200 border ${
+                          shop.is_active !== false
+                            ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-400 hover:text-rose-400 border-emerald-500/20 hover:border-rose-500/20'
+                            : 'bg-rose-500/10 hover:bg-emerald-500/10 text-rose-400 hover:text-emerald-400 border-rose-500/20 hover:border-emerald-500/20'
+                        }`}
+                        title={shop.is_active !== false ? "Suspend Bot Service" : "Activate Bot Service"}
+                      >
+                        <Power className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => {
                           setResetPasswordShop(shop);

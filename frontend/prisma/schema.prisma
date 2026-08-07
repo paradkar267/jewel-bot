@@ -17,6 +17,7 @@ model Shop {
   custom_greeting      String?
   store_address        String?
   promo_banner         String?
+  is_active            Boolean   @default(true)
   created_at           DateTime  @default(now())
 
   products             Product[]
