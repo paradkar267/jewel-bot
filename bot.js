@@ -1,8 +1,17 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
+const { Pool } = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ 
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 const app = express();
 app.use(express.json());
@@ -560,7 +569,7 @@ app.post('/webhook', async (req, res) => {
       let greeting = session.customGreeting || `Welcome to *${session.shopName || 'our Jewelry Store'}*! 💎`;
       let reply = `👋 Hello! ${greeting}\n\n`;
       reply += `📸 *Send any Jewelry Image or Instagram Screenshot* to search our live catalog!\n\n`;
-      reply += `💬 Or type what you are looking for (e.g. *"Show me gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
+      reply += `💬 Or type what you are looking for (e.g. *"Show show gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
       if (session.storeAddress) {
         reply += `📍 *Showroom Address:* ${session.storeAddress}\n`;
       }
