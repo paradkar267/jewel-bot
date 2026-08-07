@@ -89,11 +89,11 @@ export default async function DashboardPage() {
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">Live India Jewelry Market Standard Rates</span>
             </div>
-            <div className="text-sm font-extrabold text-white flex items-center gap-3 mt-0.5">
+            <div className="text-xs sm:text-sm font-extrabold text-white flex flex-wrap items-center gap-2 sm:gap-3 mt-0.5">
               <span>👑 22K Gold: <strong className="text-amber-400">₹13,750 /g</strong></span>
-              <span className="text-gray-600">|</span>
+              <span className="text-gray-600 hidden sm:inline">|</span>
               <span>🥇 24K Pure: <strong className="text-amber-300">₹14,750 /g</strong></span>
-              <span className="text-gray-600">|</span>
+              <span className="text-gray-600 hidden sm:inline">|</span>
               <span>⚪ Silver: <strong className="text-gray-300">₹240 /g</strong></span>
             </div>
           </div>
