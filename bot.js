@@ -190,15 +190,21 @@ async function downloadImageAsBase64(mediaId, shopAccessToken) {
 async function analyzeJewelryWithGemini(base64Image, mimeType, catalog) {
   const catalogJson = JSON.stringify(catalog, null, 2);
 
-  const prompt = `You are an expert jewelry analyst. Analyze this jewelry image and return ONLY a valid JSON object. No markdown, no extra text.
-Below is the JSON catalog of our shop:
+  const prompt = `You are a world-class AI jewelry vision analyst. Analyze this image and return ONLY a valid JSON object.
+Below is the shop's JSON product catalog:
 <CATALOG>
 ${catalogJson}
 </CATALOG>
 
-Look at the image and the catalog closely. The user might send a screenshot from an Instagram reel, video, or a blurry photo. Do NOT expect studio-quality images. Since the catalog data is sparse (only name, type, metal, and image_url), be highly lenient. If a catalog item reasonably matches the visual design, type, and metal of the jewelry in the screenshot, assume it is the exact match and set "exact_match_id" to that product's ID. Do not ignore a match just because of image angles or blurriness.
-Regardless of whether you find an exact match or not, find up to 2 similar items in the catalog and put their IDs in "suggestion_ids".
+CRITICAL INSTAGRAM SCREENSHOT HANDLING INSTRUCTIONS:
+1. The input image is VERY LIKELY an Instagram screenshot, Instagram Reel frame, story screenshot, or mobile screen capture.
+2. IGNORE ALL INSTAGRAM UI OVERLAYS: Ignore like buttons (❤️), comment icons (💬), share arrows, profile handles, caption text, battery indicators, or video timebars.
+3. FOCUS EXCLUSIVELY ON THE JEWELRY ITEM worn by the model or featured in the image.
+4. IGNORE LIGHTING VARIATIONS & ANGLES: Showroom lighting, warm filters, model angles, or video frame blur MUST NOT prevent matching.
+5. Leniency & Matching: Compare the visual design features (shape, metal color, stones, kundan/polki work, pattern) with items in <CATALOG>. If a catalog item reasonably matches the visual design, set "exact_match_id" to that product's UUID.
+6. Suggestions: Pick up to 2 other visually similar items for "suggestion_ids".
 
+Schema to return:
 {
   "type": "ring | necklace | earring | bracelet | pendant | anklet | bangle | other",
   "subtype": "specific style description",
@@ -216,7 +222,7 @@ Regardless of whether you find an exact match or not, find up to 2 similar items
   "is_jewelry": true
 }
 
-IMPORTANT: If the image does NOT contain jewelry, set is_jewelry to false and fill other fields with null.`;
+IMPORTANT: If the image does NOT contain any jewelry item at all, set is_jewelry to false.`;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
