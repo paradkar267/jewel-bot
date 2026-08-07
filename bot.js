@@ -190,28 +190,28 @@ Below is the shop's JSON product catalog:
 ${catalogJson}
 </CATALOG>
 
-CRITICAL MULTI-ITEM, HOOP EARRINGS & INSTAGRAM SCREENSHOT MATCHING INSTRUCTIONS:
-1. Examine ALL jewelry pieces featured in the image (earrings, hoops, studs, necklace, rings, bracelets, cuffs).
-2. IGNORE BACKGROUND/PROP OBJECTS: Ignore rocks, white pebbles, shadows, fabric folds, leaves, display stands, or models.
+CRITICAL 50%-90% SIMILARITY MATCHING INSTRUCTIONS:
+1. EXAMINE ALL JEWELRY FEATURES: Look at jewelry type (earrings, dangle, hoop, studs, necklace, ring, bracelet), stones/colors (blue sapphire, crystal, emerald, ruby, diamond, pearl), metal (gold, silver, platinum, oxidised, copper), and style (bridal, modern, antique, statement).
+2. IGNORE PROPS/BACKGROUND: Ignore leaves, rocks, white pebbles, shadows, display stands, fabric, or models.
 3. IGNORE ALL MOBILE/INSTAGRAM UI OVERLAYS: Ignore like buttons (❤️), comment icons (💬), share arrows, profile handles, captions, or timebars.
-4. LENIENT & FLEXIBLE MATCHING: Compare visual design features (twisted gold, hoops, earrings, jhumka, rings, chain, teardrop, stones) with items in <CATALOG>.
-5. ALWAYS PREFER MATCHING: If ANY item in <CATALOG> belongs to the same category (e.g., earring/hoops/bali or necklace or ring) or shares design features with the image, set "exact_match_id" to that product's UUID.
+4. HIGH-LENIENCY SIMILARITY MANDATE: Even if an item is not a 100% exact replica, if it is 50%-90% SIMILAR in type (e.g. Dangle/Hoop Earrings vs studs, Blue/Crystal stones, Gold/Silver metal, Floral/Geometrical patterns), ALWAYS select the best matching item from <CATALOG> for "exact_match_id" and pick up to 3 similar items for "suggestion_ids".
+5. NEVER RETURN NULL FOR MATCHES if <CATALOG> has products in the same category (e.g., earrings, necklaces, rings).
 
 Schema to return:
 {
   "type": "earring | ring | necklace | bracelet | pendant | anklet | bangle | other",
-  "subtype": "specific style description (e.g. twisted gold hoop earrings)",
+  "subtype": "specific style description (e.g. blue sapphire crystal dangle earrings)",
   "metal": "gold | silver | platinum | rose gold | white gold | copper | brass | unknown",
   "metal_purity": "22k or 18k or 925 or null",
-  "gemstones": ["list of gemstones or empty array"],
-  "primary_gemstone": "main gemstone or null",
+  "gemstones": ["list of gemstones or colors e.g. blue sapphire, crystal, diamond"],
+  "primary_gemstone": "main gemstone or color e.g. blue sapphire",
   "style": "traditional | modern | antique | fusion | bridal | casual | statement",
   "origin_style": "Mughal | Rajasthani | South Indian | Kundan | Polki | Western | Contemporary | null",
   "occasion": "wedding | daily wear | festival | party | office | null",
   "design_details": "2 sentence description of design",
-  "exact_match_id": "uuid of matching product from catalog, or null",
+  "exact_match_id": "uuid of best matching product from catalog, or null",
   "suggestion_ids": ["array of up to 3 uuid strings for similar products from catalog, or empty"],
-  "confidence_score": 0.9,
+  "confidence_score": 0.85,
   "is_jewelry": true
 }
 
@@ -314,7 +314,7 @@ function formatWhatsAppReply(analysis, matchingData) {
   reply += `👗 *Best For:* ${occasion}\n\n`;
   
   if (exactMatch) {
-    reply += `🛍️ *Available in our Showroom Catalog!*\n`;
+    reply += `🛍️ *Best Matching Showroom Item (90%+ Similar)!*\n`;
     reply += `*🏷️ Name:* ${exactMatch.name}\n`;
     const priceStr = exactMatch.price ? `₹${Number(exactMatch.price).toLocaleString('en-IN')}` : 'Price on request';
     reply += `*💰 Price:* ${priceStr}\n`;
@@ -325,7 +325,7 @@ function formatWhatsAppReply(analysis, matchingData) {
   }
 
   if (suggestions && suggestions.length > 0) {
-    reply += `💎 *Showroom Collection Items:*\n`;
+    reply += `💎 *90% Similar Showroom Collection Items:*\n`;
     suggestions.forEach((item, idx) => {
       const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
       reply += `${idx + 1}. *${item.name}* — ${pStr}\n`;
@@ -477,59 +477,65 @@ app.post('/webhook', async (req, res) => {
         const analysis = await analyzeJewelryWithGemini(base64, contentType, catalog);
         console.log(`   [DEBUG] Gemini Analysis:`, JSON.stringify(analysis, null, 2));
 
-        // 1. Direct AI UUID Match
-        let exactMatch = analysis.exact_match_id ? catalog.find(item => item.id === analysis.exact_match_id) : null;
-        let suggestions = (analysis.suggestion_ids || []).map(id => catalog.find(item => item.id === id)).filter(Boolean);
-        
-        // 2. Smart 3-Stage Fuzzy Fallback Matcher: If Gemini did not return exact_match_id, match by category/subtype/keywords
-        if (!exactMatch && catalog.length > 0) {
-          const detectedType = (analysis.type || '').toLowerCase();
-          const detectedSubtype = (analysis.subtype || '').toLowerCase();
-          const detectedDetails = (analysis.design_details || '').toLowerCase();
+        // Ultra-Smart Hybrid Similarity Scorer (Rank every item in catalog from 0 to 100)
+        const detectedType = (analysis.type || '').toLowerCase();
+        const detectedSubtype = (analysis.subtype || '').toLowerCase();
+        const detectedGemstones = (analysis.gemstones || []).map(g => g.toLowerCase());
+        const primaryGemstone = (analysis.primary_gemstone || '').toLowerCase();
+        const detectedMetal = (analysis.metal || '').toLowerCase();
+        const detectedDetails = (analysis.design_details || '').toLowerCase();
 
-          // Synonym map for category names
-          const synonymMap = {
-            earring: ['earring', 'earrings', 'hoop', 'hoops', 'stud', 'studs', 'bali', 'balis', 'jhumka'],
-            necklace: ['necklace', 'necklaces', 'haar', 'chain', 'choker', 'pendant', 'mangalsutra'],
-            ring: ['ring', 'rings', 'anguthi', 'band'],
-            bracelet: ['bracelet', 'bracelets', 'bangle', 'bangles', 'kangan', 'kada', 'cuff']
-          };
+        const synonymMap = {
+          earring: ['earring', 'earrings', 'hoop', 'hoops', 'stud', 'studs', 'bali', 'balis', 'jhumka', 'dangle', 'drop', 'crystal', 'sapphire'],
+          necklace: ['necklace', 'necklaces', 'haar', 'chain', 'choker', 'pendant', 'mangalsutra', 'locket'],
+          ring: ['ring', 'rings', 'anguthi', 'band', 'solitaire'],
+          bracelet: ['bracelet', 'bracelets', 'bangle', 'bangles', 'kangan', 'kada', 'cuff']
+        };
 
-          const categoryKeywords = synonymMap[detectedType] || [detectedType];
+        const categoryKeywords = synonymMap[detectedType] || [detectedType];
 
-          exactMatch = catalog.find(item => {
-            const itemName = (item.name || '').toLowerCase();
-            const itemType = (item.type || '').toLowerCase();
+        const rankedCatalog = catalog.map(item => {
+          let score = 0;
+          const itemName = (item.name || '').toLowerCase();
+          const itemType = (item.type || '').toLowerCase();
+          const itemMetal = (item.metal || '').toLowerCase();
 
-            // Match if category keywords overlap
-            if (categoryKeywords.some(kw => itemType.includes(kw) || itemName.includes(kw))) {
-              return true;
-            }
-            // Match subtype or design details
-            if (detectedSubtype && itemName.includes(detectedSubtype)) {
-              return true;
-            }
-            return false;
-          });
-
-          // Top catalog fallback if still unmatched
-          if (!exactMatch) {
-            exactMatch = catalog[0];
+          // Direct Gemini exact match bonus
+          if (analysis.exact_match_id && item.id === analysis.exact_match_id) {
+            score += 50;
           }
-        }
+          // Direct Gemini suggestion bonus
+          if (analysis.suggestion_ids && analysis.suggestion_ids.includes(item.id)) {
+            score += 35;
+          }
+          // Category / Synonym match (+30)
+          if (categoryKeywords.some(kw => itemType.includes(kw) || itemName.includes(kw))) {
+            score += 30;
+          }
+          // Subtype overlap (+20)
+          if (detectedSubtype && itemName.includes(detectedSubtype)) {
+            score += 20;
+          }
+          // Gemstone / Color match e.g. blue, sapphire, crystal, diamond (+15)
+          if (primaryGemstone && itemName.includes(primaryGemstone)) {
+            score += 15;
+          }
+          if (detectedGemstones.some(g => itemName.includes(g))) {
+            score += 15;
+          }
+          // Metal match (+10)
+          if (detectedMetal && (itemMetal.includes(detectedMetal) || itemName.includes(detectedMetal))) {
+            score += 10;
+          }
 
-        if (exactMatch) {
-          suggestions = suggestions.filter(item => item.id !== exactMatch.id);
-        }
+          return { item, score };
+        });
 
-        // Fill remaining suggestions from catalog if less than 2
-        if (suggestions.length < 2 && catalog.length > 1) {
-          catalog.forEach(item => {
-            if (item.id !== exactMatch?.id && !suggestions.some(s => s.id === item.id) && suggestions.length < 2) {
-              suggestions.push(item);
-            }
-          });
-        }
+        // Sort catalog items by highest similarity score
+        rankedCatalog.sort((a, b) => b.score - a.score);
+
+        let exactMatch = rankedCatalog.length > 0 ? rankedCatalog[0].item : null;
+        let suggestions = rankedCatalog.slice(1, 4).map(r => r.item);
 
         const matchingData = { exactMatch, suggestions };
 
