@@ -237,3 +237,38 @@ export async function deleteShopFromAdmin(shopId: string) {
 
   return { success: true };
 }
+
+export async function checkShopDiagnostics(shopId: string) {
+  await verifyAdmin();
+
+  const shop = await prisma.shop.findUnique({
+    where: { id: shopId }
+  });
+
+  if (!shop) throw new Error("Shop not found");
+
+  const hasPhoneId = Boolean(shop.meta_phone_number_id && shop.meta_phone_number_id.trim());
+  const hasToken = Boolean(shop.meta_access_token && shop.meta_access_token.trim());
+  const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY);
+
+  let metaStatus: 'HEALTHY' | 'WARNING' | 'CONFIG_NEEDED' = 'CONFIG_NEEDED';
+
+  if (hasPhoneId && hasToken) {
+    metaStatus = 'HEALTHY';
+  } else if (hasPhoneId || hasToken) {
+    metaStatus = 'WARNING';
+  }
+
+  return {
+    success: true,
+    shopId: shop.id,
+    shopName: shop.name,
+    hasPhoneId,
+    hasToken,
+    hasGeminiKey,
+    metaStatus,
+    whatsappNumber: shop.whatsapp_number,
+    ownerEmail: shop.owner_email,
+    isActive: shop.is_active !== false,
+  };
+}
