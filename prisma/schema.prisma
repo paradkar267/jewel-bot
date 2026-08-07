@@ -18,7 +18,7 @@ model Shop {
   store_address                  String?
   promo_banner                   String?
   is_active                      Boolean   @default(true)
-  gold_rate_per_gram             Decimal?  // Today's Gold Rate per gram in INR
+  gold_rate_per_gram             Decimal?  // Today's 24K Gold Rate per gram in INR
   silver_rate_per_gram           Decimal?  // Today's Silver Rate per gram in INR
   default_making_charge_percent Decimal?  // Default Making Charge %
   created_at                     DateTime  @default(now())
@@ -36,6 +36,7 @@ model Product {
   name                  String
   type                  String?
   metal                 String?
+  karat                 String?  // e.g. 22K, 18K, 14K, 24K, 925 Silver
   weight_grams          Decimal? // Weight in Grams
   making_charge_percent Decimal? // Specific Making Charge %
   price                 Decimal?

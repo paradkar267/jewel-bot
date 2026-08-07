@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Edit3, Trash2, Layers, Tag, X, Upload, Loader2, AlertCircle, ExternalLink, Package } from 'lucide-react';
+import { Edit3, Trash2, Layers, Tag, X, Upload, Loader2, AlertCircle, ExternalLink, Package, Scale, Sparkles } from 'lucide-react';
 import { updateProduct, deleteProduct } from '@/app/actions/product';
 
 interface Product {
@@ -10,6 +10,9 @@ interface Product {
   name: string;
   type: string | null;
   metal: string | null;
+  karat?: string | null;
+  weight_grams?: any;
+  making_charge_percent?: any;
   price: any; // Decimal type from Prisma
   url: string | null;
   image_url: string | null;
@@ -20,11 +23,14 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null); // holds id of product being deleted
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     type: 'ring',
     metal: 'gold',
+    karat: '22K',
+    weight_grams: '',
+    making_charge_percent: '',
     price: '',
     url: '',
     image_url: '' as string | null
@@ -38,6 +44,9 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
       name: product.name,
       type: product.type || 'ring',
       metal: product.metal || 'gold',
+      karat: product.karat || '22K',
+      weight_grams: product.weight_grams ? String(product.weight_grams) : '',
+      making_charge_percent: product.making_charge_percent ? String(product.making_charge_percent) : '',
       price: product.price ? String(product.price) : '',
       url: product.url || '',
       image_url: product.image_url
@@ -48,26 +57,27 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
   // Convert File to Base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError('Image file size must be less than 2MB');
+        return;
+      }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Image size must be less than 2MB.");
-      return;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditForm(prev => ({ ...prev, image_url: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
     }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setEditForm(prev => ({ ...prev, image_url: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
   };
 
-  // Handle Save
-  const handleSave = async (e: React.FormEvent) => {
+  // Handle Edit Form Submission
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
+
     if (!editForm.name.trim()) {
-      setError("Product Name is required.");
+      setError('Jewelry name is required');
       return;
     }
 
@@ -75,11 +85,17 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     setError('');
 
     try {
-      const parsedPrice = editForm.price ? parseFloat(editForm.price) : null;
+      const parsedPrice = editForm.price.trim() !== '' ? parseFloat(editForm.price) : null;
+      const parsedWeight = editForm.weight_grams.trim() !== '' ? parseFloat(editForm.weight_grams) : null;
+      const parsedMaking = editForm.making_charge_percent.trim() !== '' ? parseFloat(editForm.making_charge_percent) : null;
+
       const result = await updateProduct(editingProduct.id, {
         name: editForm.name,
         type: editForm.type,
         metal: editForm.metal,
+        karat: editForm.karat,
+        weight_grams: parsedWeight,
+        making_charge_percent: parsedMaking,
         price: parsedPrice,
         url: editForm.url,
         image_url: editForm.image_url
@@ -97,143 +113,182 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     }
   };
 
-  // Handle Delete
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this jewelry piece from your vault?")) return;
+  // Handle Delete Click
+  const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${name}" from your catalog?`)) {
+      return;
+    }
 
     setIsDeleting(id);
     try {
-      const result = await deleteProduct(id);
-      if (result.success) {
-        setProducts(prev => prev.filter(p => p.id !== id));
-      }
+      await deleteProduct(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
     } catch (err: any) {
-      alert(err.message || "Failed to delete product.");
+      alert("Failed to delete product: " + err.message);
     } finally {
       setIsDeleting(null);
     }
   };
 
   return (
-    <>
+    <div>
+      {/* Product Grid */}
       {products.length === 0 ? (
-        <div className="text-center py-24 bg-[#111111]/50 rounded-2xl border border-white/5 backdrop-blur-sm">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 mb-6 shadow-inner">
-            <Package className="h-10 w-10 text-gray-500" />
-          </div>
-          <h3 className="text-xl font-bold text-white">Your vault is empty</h3>
-          <p className="mt-2 text-gray-400 max-w-md mx-auto">Start building your automated catalog by adding your first jewelry piece. Our AI will handle the rest.</p>
+        <div className="text-center py-16 bg-[#111111] border border-white/5 rounded-2xl">
+          <Package className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <h3 className="text-lg font-bold text-white mb-1">No Jewelry Items Added Yet</h3>
+          <p className="text-gray-400 text-xs max-w-sm mx-auto">
+            Click "Add Jewelry" to create your first catalog item or sync your website.
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products.map((product) => (
-            <div key={product.id} className="group bg-[#111111] rounded-xl overflow-hidden border border-white/5 hover:border-amber-500/30 transition-all duration-300 hover:shadow-[0_4px_20px_rgb(0,0,0,0.5)] relative">
-              
-              {/* Actions Overlay (Glassmorphism top right) */}
-              <div className="absolute top-2 right-2 z-20 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <button
-                  onClick={() => startEdit(product)}
-                  className="p-1.5 rounded-lg bg-black/60 border border-white/10 text-amber-400 hover:bg-amber-500 hover:text-black transition-all hover:scale-105"
-                  title="Edit Jewelry"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(product.id)}
-                  className="p-1.5 rounded-lg bg-black/60 border border-white/10 text-red-400 hover:bg-red-500 hover:text-white transition-all hover:scale-105"
-                  title="Delete Jewelry"
-                  disabled={isDeleting === product.id}
-                >
-                  {isDeleting === product.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <div
+              key={product.id}
+              className="bg-[#111111] border border-white/5 rounded-2xl overflow-hidden hover:border-amber-500/30 transition-all duration-300 group flex flex-col justify-between"
+            >
+              <div>
+                {/* Image Section */}
+                <div className="relative h-48 w-full bg-[#0a0a0a] overflow-hidden flex items-center justify-center border-b border-white/5">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <div className="text-gray-600 text-xs font-semibold">No Image Provided</div>
                   )}
-                </button>
+
+                  {/* Metal / Karat Badge */}
+                  <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+                    {product.karat && (
+                      <span className="px-2.5 py-1 bg-amber-500/90 text-black text-[10px] font-extrabold rounded-full uppercase shadow-md backdrop-blur-md">
+                        {product.karat}
+                      </span>
+                    )}
+                    <span className="px-2.5 py-1 bg-black/80 text-amber-300 text-[10px] font-bold rounded-full uppercase border border-amber-500/30 backdrop-blur-md">
+                      {product.metal || 'Gold'}
+                    </span>
+                  </div>
+
+                  {/* Category Badge */}
+                  <div className="absolute top-3 right-3">
+                    <span className="px-2.5 py-1 bg-black/80 text-gray-300 text-[10px] font-medium rounded-full border border-white/10 backdrop-blur-md capitalize">
+                      {product.type || 'Jewelry'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Details Section */}
+                <div className="p-4 space-y-2">
+                  <h3 className="font-bold text-white text-base truncate group-hover:text-amber-400 transition-colors">
+                    {product.name}
+                  </h3>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="text-amber-400 font-extrabold text-lg">
+                      {product.price ? `₹${Number(product.price).toLocaleString('en-IN')}` : 'Ask for Price'}
+                    </div>
+
+                    {product.weight_grams && (
+                      <div className="text-[11px] font-semibold text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg flex items-center gap-1 border border-white/5">
+                        <Scale className="w-3 h-3 text-amber-500" />
+                        <span>{Number(product.weight_grams)}g</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Image Area */}
-              <div className="aspect-square bg-[#0a0a0a] relative overflow-hidden flex items-center justify-center">
-                {product.image_url ? (
-                  <>
-                    <img src={product.image_url} alt={product.name} className="absolute inset-0 w-full h-full object-cover z-0 transform group-hover:scale-105 transition-transform duration-700" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/20 to-transparent z-10" />
-                  </>
+              {/* Card Actions Footer */}
+              <div className="px-4 py-3 bg-[#0a0a0a]/50 border-t border-white/5 flex items-center justify-between text-xs">
+                {product.url ? (
+                  <a
+                    href={product.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-amber-400 flex items-center font-medium transition-colors text-[11px]"
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    View Store Page
+                  </a>
                 ) : (
-                  <div className="text-6xl z-0 transform group-hover:scale-105 transition-transform duration-500">
-                    {product.type === 'ring' ? '💍' : product.type === 'necklace' ? '📿' : '✨'}
-                  </div>
+                  <span className="text-[10px] text-gray-600">No URL</span>
                 )}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => startEdit(product)}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition-all border border-transparent hover:border-amber-500/30"
+                    title="Edit Item"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(product.id, product.name)}
+                    disabled={isDeleting === product.id}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
+                    title="Delete Item"
+                  >
+                    {isDeleting === product.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* Content Area */}
-              <div className="p-4">
-                <h4 className="text-sm font-bold text-white mb-2 line-clamp-1">{product.name || 'Unnamed Jewelry'}</h4>
-                
-                <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
-                  <div className="flex items-center gap-1 capitalize truncate pr-2">
-                    <Layers className="w-3 h-3 text-gray-500" />
-                    {product.metal}
-                  </div>
-                  <div className="flex items-center gap-1 capitalize shrink-0">
-                    <Tag className="w-3 h-3 text-gray-500" />
-                    {product.type}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-white/5 flex flex-col">
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium mb-0.5">Est. Value</span>
-                  <span className="text-sm font-bold text-amber-400">
-                    {product.price ? `₹${Number(product.price).toLocaleString()}` : 'Ask for Price'}
-                  </span>
-                </div>
-              </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Edit Modal Overlay */}
+      {/* Edit Jewelry Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#111111] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-[#111111] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl my-8">
             
-            {/* Close Button */}
-            <button
-              onClick={() => { if (!isSaving) setEditingProduct(null); }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Header */}
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-white flex items-center">
-                <Edit3 className="w-5 h-5 text-amber-500 mr-2" />
-                Edit Jewelry Item
-              </h3>
-              <p className="text-gray-400 text-xs mt-1">Update details for "{editingProduct.name}" in your catalog.</p>
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-[#0a0a0a]">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-amber-500" />
+                  Edit Jewelry Item
+                </h3>
+                <p className="text-xs text-gray-400">Update details & purity for "{editingProduct.name}"</p>
+              </div>
+              <button
+                onClick={() => setEditingProduct(null)}
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-2.5 text-xs text-red-400">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
+            {/* Modal Form */}
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              
+              {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-            {/* Form */}
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              {/* Jewelry Name & Price */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Jewelry Name</label>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Jewelry Name *</label>
                   <input
                     type="text"
-                    required
                     value={editForm.name}
                     onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-bold"
+                    placeholder="e.g. Kundan Gold Necklace"
                     disabled={isSaving}
                   />
                 </div>
@@ -244,14 +299,33 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     type="number"
                     value={editForm.price}
                     onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
-                    placeholder="Ask for Price"
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-amber-400 font-extrabold focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
+                    placeholder="Auto-calculated or Manual"
                     disabled={isSaving}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Karat / Purity & Metal */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-amber-400 mb-1.5">Karat / Purity ✨</label>
+                  <select
+                    value={editForm.karat}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, karat: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-2.5 text-white font-bold focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs cursor-pointer"
+                    disabled={isSaving}
+                  >
+                    <option value="22K">22K Gold (916 Purity) 👑</option>
+                    <option value="18K">18K Gold (750 Purity) 💎</option>
+                    <option value="14K">14K Gold (585 Purity) ✨</option>
+                    <option value="24K">24K Gold (999 Pure) 🥇</option>
+                    <option value="925 Silver">925 Sterling Silver 🥈</option>
+                    <option value="999 Silver">999 Pure Silver ⚪</option>
+                    <option value="Fashion">Fashion / Imitation 🌸</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 mb-1.5">Category</label>
                   <select
@@ -286,11 +360,39 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     <option value="white gold">White Gold ⚪</option>
                     <option value="copper">Copper ⚙️</option>
                     <option value="brass">Brass ⚙️</option>
-                    <option value="unknown">Unknown ⚙️</option>
                   </select>
                 </div>
               </div>
 
+              {/* Weight in Grams & Making Charges % */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Weight (in Grams)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editForm.weight_grams}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, weight_grams: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs font-bold"
+                    placeholder="e.g. 8.5"
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5">Making Charge (%)</label>
+                  <input
+                    type="number"
+                    value={editForm.making_charge_percent}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, making_charge_percent: e.target.value }))}
+                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-xs"
+                    placeholder="Default shop %"
+                    disabled={isSaving}
+                  />
+                </div>
+              </div>
+
+              {/* Purchase URL */}
               <div>
                 <label className="block text-xs font-semibold text-gray-400 mb-1.5">Purchase URL</label>
                 <input
@@ -303,6 +405,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                 />
               </div>
 
+              {/* Image Upload */}
               <div>
                 <label className="block text-xs font-semibold text-gray-400 mb-1.5">Jewelry Image</label>
                 <div className="border border-dashed border-white/10 rounded-xl p-3 flex items-center justify-between bg-white/[0.01] hover:bg-white/[0.02] transition-all cursor-pointer relative min-h-16">
@@ -370,6 +473,6 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

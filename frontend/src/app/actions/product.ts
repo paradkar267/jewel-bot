@@ -9,6 +9,7 @@ export async function createProduct(data: {
   name: string;
   type: string;
   metal: string;
+  karat?: string | null;
   price: number | null;
   weight_grams?: number | null;
   making_charge_percent?: number | null;
@@ -29,6 +30,7 @@ export async function createProduct(data: {
       name: data.name,
       type: data.type,
       metal: data.metal,
+      karat: data.karat ?? null,
       price: data.price,
       weight_grams: data.weight_grams ?? null,
       making_charge_percent: data.making_charge_percent ?? null,
@@ -55,6 +57,7 @@ export async function updateProduct(
     name: string;
     type: string;
     metal: string;
+    karat?: string | null;
     price: number | null;
     weight_grams?: number | null;
     making_charge_percent?: number | null;
@@ -78,6 +81,7 @@ export async function updateProduct(
       name: data.name,
       type: data.type,
       metal: data.metal,
+      karat: data.karat ?? null,
       price: data.price,
       weight_grams: data.weight_grams ?? null,
       making_charge_percent: data.making_charge_percent ?? null,
@@ -190,12 +194,23 @@ export async function updateShopMetalRatesAndRecalculate(data: {
           
           let ratePerGram = data.gold_rate;
           const metalLower = (prod.metal || '').toLowerCase();
+          
+          // Karat purity multiplier calculation
+          let purityFactor = 1.0;
+          const karatStr = (prod.karat || '').toUpperCase();
+          if (karatStr.includes('22K')) purityFactor = 22 / 24;
+          else if (karatStr.includes('18K')) purityFactor = 18 / 24;
+          else if (karatStr.includes('14K')) purityFactor = 14 / 24;
+          else if (karatStr.includes('10K')) purityFactor = 10 / 24;
+          else if (karatStr.includes('24K')) purityFactor = 1.0;
+
           if (metalLower.includes('silver')) {
             ratePerGram = data.silver_rate;
+            purityFactor = 1.0;
           }
 
-          // Formula: (Weight * Metal Rate) * (1 + MakingCharge%)
-          const rawPrice = weight * ratePerGram;
+          // Formula: (Weight * (Metal Rate * Purity)) * (1 + MakingCharge%)
+          const rawPrice = weight * (ratePerGram * purityFactor);
           const calculatedPrice = Math.round(rawPrice * (1 + makingPct / 100));
 
           await prisma.product.update({

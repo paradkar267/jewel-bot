@@ -120,6 +120,8 @@ async function fetchShopCatalog(shopId) {
       name: p.name,
       type: p.type,
       metal: p.metal,
+      karat: p.karat,
+      weight_grams: p.weight_grams ? Number(p.weight_grams) : null,
       price: p.price ? Number(p.price) : null,
       url: p.url,
       image_url: p.image_url
@@ -588,7 +590,9 @@ app.post('/webhook', async (req, res) => {
                 matchedProducts.forEach((item, idx) => {
                   const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
                   reply += `${idx + 1}. *${item.name}*\n`;
-                  if (item.metal || item.type) reply += `   🏷️ ${[item.metal, item.type].filter(Boolean).join(' · ')}\n`;
+                  const metaTags = [item.karat, item.metal, item.type].filter(Boolean).join(' · ');
+                  if (metaTags) reply += `   ✨ *Purity/Details:* ${metaTags}\n`;
+                  if (item.weight_grams) reply += `   ⚖️ *Weight:* ${item.weight_grams}g\n`;
                   reply += `   💰 *Price:* ${pStr}\n`;
                   if (item.url) reply += `   🔗 *Buy Link:* ${item.url}\n`;
                   reply += `\n`;
