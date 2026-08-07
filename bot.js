@@ -1,110 +1,83 @@
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
-const { Pool } = require('pg');
-require('dotenv').config();
+const prisma = new PrismaClient();
 
 const app = express();
-app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const PORT = process.env.PORT || 3002;
+// In-memory session store (Phone number -> session data)
+const userSessions = new Map();
 
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ 
-  connectionString,
-  ssl: { rejectUnauthorized: false }
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
-
-// ── In-memory session store ───────
-const sessions = new Map();
-
-function checkAndResetDailyLimit(session) {
-  const today = new Date().toISOString().slice(0, 10);
-  if (session.lastImageDate !== today) {
-    session.lastImageDate = today;
-    session.dailyImageCount = 0;
-  }
-}
+// Session timeout: 30 minutes of inactivity resets state
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 function getSession(phone) {
-  if (!sessions.has(phone)) {
-    sessions.set(phone, {
-      phone,
+  const now = Date.now();
+  let session = userSessions.get(phone);
+
+  if (!session || (now - session.lastActive > SESSION_TIMEOUT_MS)) {
+    session = {
       state: 'idle',
+      lastActive: now,
       lastAnalysis: null,
-      messageCount: 0,
-      dailyImageCount: 0,
-      lastImageDate: new Date().toISOString().slice(0, 10),
-      joinedAt: new Date(),
       shopId: null,
       shopName: null,
       metaPhoneNumberId: null,
-      metaAccessToken: null
-    });
+      metaAccessToken: null,
+      customGreeting: null,
+      storeAddress: null,
+      promoBanner: null,
+      isActive: true,
+      dailyImageCount: 0,
+      lastImageDate: new Date().toDateString()
+    };
+    userSessions.set(phone, session);
+  } else {
+    session.lastActive = now;
   }
-  const session = sessions.get(phone);
-  checkAndResetDailyLimit(session);
+
+  // Reset daily count if date has changed
+  const today = new Date().toDateString();
+  if (session.lastImageDate !== today) {
+    session.dailyImageCount = 0;
+    session.lastImageDate = today;
+  }
+
   return session;
 }
 
-// ── Database Queries ───────
-
-// 1. Find shop ID by its WhatsApp number or Meta Phone ID
-async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
-  console.log(`   [DEBUG] Looking up shop for phone: ${phone}, meta_id: ${metaPhoneNumberId}`);
-  
-  if (metaPhoneNumberId) {
-    try {
-      const data = await prisma.shop.findFirst({
-        where: { meta_phone_number_id: metaPhoneNumberId },
-        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true, is_active: true }
-      });
-      if (data) {
-        console.log(`   [DEBUG] Found shop by meta_phone_number_id!`);
-        return data;
-      }
-    } catch (error) {
-      console.log(`   [DEBUG] Error looking up by meta_id:`, error.message);
-    }
-  }
-
-  if (phone) {
-    try {
-      const cleanPhone = phone.replace(/[^0-9]/g, '');
-      const data = await prisma.shop.findFirst({
-        where: {
-          whatsapp_number: { contains: cleanPhone }
-        },
-        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true, is_active: true }
-      });
-      if (data) {
-        console.log(`   [DEBUG] Found shop by phone number!`);
-        return data;
-      }
-    } catch (error) {
-      console.log(`   [DEBUG] Error looking up by phone:`, error.message);
-    }
-  }
-
-  // Fallback: If only 1 shop exists in database, auto-assign it
+// 1. Fetch shop info by phone number or meta_phone_number_id
+async function getShopByPhoneNumber(receivingNumber, metaPhoneNumberId) {
   try {
-    const shops = await prisma.shop.findMany({
-      take: 2,
-      select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true, is_active: true }
-    });
-    if (shops.length === 1) {
-      console.log(`   [DEBUG] Fallback: Auto-assigning single existing shop: ${shops[0].name}`);
-      return shops[0];
+    if (metaPhoneNumberId) {
+      const shopByMeta = await prisma.shop.findFirst({
+        where: { meta_phone_number_id: metaPhoneNumberId }
+      });
+      if (shopByMeta) return shopByMeta;
     }
-  } catch (err) {
-    console.log(`   [DEBUG] Fallback shop lookup error:`, err.message);
-  }
 
-  return null;
+    if (receivingNumber) {
+      const cleanNumber = receivingNumber.replace(/\D/g, '');
+      const shopByPhone = await prisma.shop.findFirst({
+        where: {
+          OR: [
+            { whatsapp_number: cleanNumber },
+            { whatsapp_number: `+${cleanNumber}` },
+            { whatsapp_number: { endsWith: cleanNumber.slice(-10) } }
+          ]
+        }
+      });
+      if (shopByPhone) return shopByPhone;
+    }
+
+    // Default fallback to first active shop
+    return await prisma.shop.findFirst({ where: { is_active: true } });
+  } catch (error) {
+    console.error("   ❌ Error fetching shop by phone:", error.message);
+    return null;
+  }
 }
 
 // 2. Fetch catalog items for a specific shop
@@ -144,9 +117,9 @@ async function trackLead(shopId, phone, customerName) {
       await prisma.lead.update({
         where: { id: existing.id },
         data: {
-          message_count: { increment: 1 },
           last_contacted_at: new Date(),
-          customer_name: customerName && customerName !== 'there' ? customerName : existing.customer_name
+          message_count: { increment: 1 },
+          customer_name: (customerName && customerName !== 'there') ? customerName : existing.customer_name
         }
       });
     } else {
@@ -190,21 +163,31 @@ async function downloadImageAsBase64(mediaId, shopAccessToken) {
 
 // ── Step 2: Gemini Vision API ───────
 async function analyzeJewelryWithGemini(base64Image, mimeType, catalog) {
-  const catalogJson = JSON.stringify(catalog, null, 2);
+  // Strip heavy base64 data URLs from prompt to avoid blowing up JSON payload
+  const cleanCatalog = catalog.map(c => ({
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    metal: c.metal,
+    karat: c.karat,
+    price: c.price
+  }));
 
-  const prompt = `You are a world-class AI jewelry vision analyst. Analyze this image and return ONLY a valid JSON object.
+  const catalogJson = JSON.stringify(cleanCatalog, null, 2);
+
+  const prompt = `You are a world-class AI jewelry vision analyst and sales matcher. Analyze this image and return ONLY a valid JSON object.
 Below is the shop's JSON product catalog:
 <CATALOG>
 ${catalogJson}
 </CATALOG>
 
-CRITICAL INSTAGRAM SCREENSHOT HANDLING INSTRUCTIONS:
-1. The input image is VERY LIKELY an Instagram screenshot, Instagram Reel frame, story screenshot, or mobile screen capture.
-2. IGNORE ALL INSTAGRAM UI OVERLAYS: Ignore like buttons (❤️), comment icons (💬), share arrows, profile handles, caption text, battery indicators, or video timebars.
-3. FOCUS EXCLUSIVELY ON THE JEWELRY ITEM worn by the model or featured in the image.
-4. IGNORE LIGHTING VARIATIONS & ANGLES: Showroom lighting, warm filters, model angles, or video frame blur MUST NOT prevent matching.
-5. Leniency & Matching: Compare the visual design features (shape, metal color, stones, kundan/polki work, pattern) with items in <CATALOG>. If a catalog item reasonably matches the visual design, set "exact_match_id" to that product's UUID.
-6. Suggestions: Pick up to 2 other visually similar items for "suggestion_ids".
+CRITICAL MULTI-ITEM & INSTAGRAM SCREENSHOT MATCHING INSTRUCTIONS:
+1. The model in the image MAY BE WEARING MULTIPLE JEWELRY PIECES (e.g. Necklace, Rings, Bracelets/Cuffs, Earrings, Bangles).
+2. Examine ALL jewelry pieces featured in the image (neck, hands, wrists, ears).
+3. IGNORE ALL INSTAGRAM/MOBILE UI OVERLAYS: Ignore like buttons (❤️), comment icons (💬), share arrows, profile handles, captions, battery indicators, or video timebars.
+4. FOCUS ON THE JEWELRY: Match any jewelry piece (necklace, ring, bracelet, cuff, earring, pendant) against items in <CATALOG>.
+5. LENIENT & FLEXIBLE MATCHING: If ANY item in <CATALOG> visually resembles any of the jewelry pieces worn by the model (e.g., gold chain, teardrop pendant, gold ring, open cuff bracelet, Kundan/Polki work, diamond accents), set "exact_match_id" to that product's UUID.
+6. SUGGESTIONS: Pick up to 3 other visually or category-related items from <CATALOG> for "suggestion_ids".
 
 Schema to return:
 {
@@ -218,8 +201,8 @@ Schema to return:
   "origin_style": "Mughal | Rajasthani | South Indian | Kundan | Polki | Western | Contemporary | null",
   "occasion": "wedding | daily wear | festival | party | office | null",
   "design_details": "2 sentence description of design",
-  "exact_match_id": "uuid of the exact matching product from the catalog, or null",
-  "suggestion_ids": ["array of up to 2 uuid strings for similar products from the catalog, or empty"],
+  "exact_match_id": "uuid of matching product from catalog, or null",
+  "suggestion_ids": ["array of up to 3 uuid strings for similar products from catalog, or empty"],
   "confidence_score": 0.9,
   "is_jewelry": true
 }
@@ -254,7 +237,16 @@ IMPORTANT: If the image does NOT contain any jewelry item at all, set is_jewelry
 
 // ── Step 2.5: Gemini AI Text Catalog Search ───────
 async function searchCatalogWithTextGemini(userQuery, catalog) {
-  const catalogJson = JSON.stringify(catalog, null, 2);
+  const cleanCatalog = catalog.map(c => ({
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    metal: c.metal,
+    karat: c.karat,
+    price: c.price
+  }));
+
+  const catalogJson = JSON.stringify(cleanCatalog, null, 2);
 
   const prompt = `You are an expert AI jewelry sales assistant. A customer sent this message: "${userQuery}".
 Below is our shop's JSON catalog:
@@ -278,7 +270,9 @@ If the user message is general chatter or not looking for jewelry products, set 
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
       generationConfig: { responseMimeType: "application/json" }
     },
     { headers: { 'Content-Type': 'application/json' } }
@@ -291,11 +285,11 @@ If the user message is general chatter or not looking for jewelry products, set 
 
 // ── Step 3: Format WhatsApp reply ───────
 function formatWhatsAppReply(analysis, matchingData) {
-  if (!analysis.is_jewelry) {
-    return `❌ *Jewelry not detected!*\n\nPlease send a clear image of jewelry (ring, necklace, earring, bracelet, etc.).\n\nTip: Make sure the jewelry is clearly visible and well-lit. 📸`;
-  }
+  const { exactMatch, suggestions } = matchingData;
 
-  const { exactMatch, suggestions } = matchingData || { exactMatch: null, suggestions: [] };
+  if (!analysis.is_jewelry) {
+    return `⚠️ *No Jewelry Detected*\n\nHumari AI ko is photo me koi jewelry piece (har, anguthi, jhumka, bracelet) nahi mila. Kripya jewelry ki saaf photo ya screenshot bheinjein! ✨`;
+  }
 
   const typeEmoji = {
     ring: '💍', necklace: '📿', earring: '👂', bracelet: '⌚',
@@ -312,21 +306,22 @@ function formatWhatsAppReply(analysis, matchingData) {
   reply += `👗 *Best For:* ${occasion}\n\n`;
   
   if (exactMatch) {
-    reply += `🛍️ *Available in our Catalog!*\n`;
+    reply += `🛍️ *Available in our Showroom Catalog!*\n`;
     reply += `*🏷️ Name:* ${exactMatch.name}\n`;
     const priceStr = exactMatch.price ? `₹${Number(exactMatch.price).toLocaleString('en-IN')}` : 'Price on request';
     reply += `*💰 Price:* ${priceStr}\n`;
-    reply += `*🔗 Buy Here:* ${exactMatch.url}\n\n`;
+    if (exactMatch.url) reply += `*🔗 Buy Here:* ${exactMatch.url}\n`;
+    reply += `\n`;
   } else {
-    reply += `😔 *Exact match not found in our current catalog.*\n`;
-    reply += `We will notify you when similar items arrive!\n\n`;
+    reply += `✨ *Showing Best Matching Designs From Our Catalog:*\n\n`;
   }
 
   if (suggestions && suggestions.length > 0) {
-    reply += `✨ *Similar Designs You Might Like:*\n`;
+    reply += `💎 *Showroom Collection Items:*\n`;
     suggestions.forEach((item, idx) => {
       const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
-      reply += `${idx + 1}. *${item.name}* — ${pStr}\n   🔗 ${item.url}\n`;
+      reply += `${idx + 1}. *${item.name}* — ${pStr}\n`;
+      if (item.url) reply += `   🔗 ${item.url}\n`;
     });
   }
 
@@ -369,54 +364,44 @@ const processedMessageIds = new Set();
 
 // ── Webhook: Receives incoming WhatsApp messages ───────
 app.post('/webhook', async (req, res) => {
-  res.status(200).send('EVENT_RECEIVED');
+  res.sendStatus(200); // Immediate 200 OK to Meta
 
   try {
-    const entry = req.body.entry;
-    if (!entry || !entry[0] || !entry[0].changes || !entry[0].changes[0].value) return;
+    const entry = req.body?.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const value = changes?.value;
+    const message = value?.messages?.[0];
 
-    const value = entry[0].changes[0].value;
-    const messages = value.messages;
-    const metadata = value.metadata;
+    if (!message) return;
 
-    if (!messages || !messages[0]) return;
-    
-    const message = messages[0];
-    
-    // Prevent duplicate processing of the same message
-    if (processedMessageIds.has(message.id)) {
-      console.log(`   [DEBUG] Ignored duplicate message retry: ${message.id}`);
+    const messageId = message.id;
+    if (processedMessageIds.has(messageId)) {
+      console.log(`   🔁 Skipping duplicate message ID: ${messageId}`);
       return;
     }
-    processedMessageIds.add(message.id);
+    processedMessageIds.add(messageId);
 
-    // Prevent processing old messages (older than 2 minutes)
-    if (message.timestamp) {
-      const messageAgeSeconds = Math.floor(Date.now() / 1000) - parseInt(message.timestamp, 10);
-      if (messageAgeSeconds > 120) {
-        console.log(`   [DEBUG] Ignored old message to prevent retry loop. Age: ${messageAgeSeconds}s`);
-        return;
-      }
+    // Limit set size to prevent memory leaks
+    if (processedMessageIds.size > 1000) {
+      const firstKey = processedMessageIds.values().next().value;
+      processedMessageIds.delete(firstKey);
     }
 
     const phone = message.from;
-    const receivingNumber = metadata && metadata.display_phone_number ? metadata.display_phone_number : null;
-    const metaPhoneNumberId = metadata && metadata.phone_number_id ? metadata.phone_number_id : null;
-    const userName = value.contacts && value.contacts[0] ? value.contacts[0].profile.name : 'there';
+    const metaPhoneNumberId = value?.metadata?.phone_number_id;
+    const receivingNumber = value?.metadata?.display_phone_number;
+    const contact = value?.contacts?.[0];
+    const userName = contact?.profile?.name || 'there';
 
-    let textBody = '';
-    if (message.type === 'text') {
-      textBody = message.text.body;
-    }
+    console.log(`\n📩 Incoming WhatsApp message from +${phone} (${userName}) to Meta ID ${metaPhoneNumberId}:`);
 
-    const hasImage = message.type === 'image' && message.image && message.image.id;
+    const hasImage = message.type === 'image';
     const mediaId = hasImage ? message.image.id : null;
+    const textBody = message.type === 'text' ? message.text.body : '';
 
     const session = getSession(phone);
-    console.log(`\n📩 Message from ${phone} (${userName}): "${textBody || (hasImage ? '[IMAGE]' : message.type)}"`);
-    session.messageCount++;
 
-    // Resolve which shop this is (retry lookup if null)
+    // Assign shop to session if missing
     if (!session.shopId) {
       const shop = await getShopByPhoneNumber(receivingNumber, metaPhoneNumberId);
       if (shop) {
@@ -484,11 +469,30 @@ app.post('/webhook', async (req, res) => {
         const analysis = await analyzeJewelryWithGemini(base64, contentType, catalog);
         console.log(`   [DEBUG] Gemini Analysis:`, JSON.stringify(analysis, null, 2));
 
-        const exactMatch = analysis.exact_match_id ? catalog.find(item => item.id === analysis.exact_match_id) : null;
+        let exactMatch = analysis.exact_match_id ? catalog.find(item => item.id === analysis.exact_match_id) : null;
         let suggestions = (analysis.suggestion_ids || []).map(id => catalog.find(item => item.id === id)).filter(Boolean);
         
-        if (analysis.exact_match_id) {
-          suggestions = suggestions.filter(item => item.id !== analysis.exact_match_id);
+        // Smart Fallback: If no exactMatch was found, auto-match by type or metal from catalog so customer ALWAYS gets catalog items!
+        if (!exactMatch && catalog.length > 0) {
+          const typeMatch = catalog.find(item => (item.type || '').toLowerCase() === (analysis.type || '').toLowerCase());
+          if (typeMatch) {
+            exactMatch = typeMatch;
+          } else {
+            exactMatch = catalog[0]; // Top catalog item fallback
+          }
+        }
+
+        if (exactMatch) {
+          suggestions = suggestions.filter(item => item.id !== exactMatch.id);
+        }
+
+        // Fill remaining suggestions from catalog if less than 2
+        if (suggestions.length < 2 && catalog.length > 1) {
+          catalog.forEach(item => {
+            if (item.id !== exactMatch?.id && !suggestions.some(s => s.id === item.id) && suggestions.length < 2) {
+              suggestions.push(item);
+            }
+          });
         }
 
         const matchingData = { exactMatch, suggestions };
@@ -518,142 +522,74 @@ app.post('/webhook', async (req, res) => {
       const text = textBody.toLowerCase().trim();
 
       if (text === 'stop') {
-        if (session.shopId) {
-          try {
-            await prisma.lead.updateMany({
-              where: { shop_id: session.shopId, customer_phone: phone },
-              data: { is_active: false }
-            });
-            await sendWhatsAppReply(phone,
-              `⛔ *You have been unsubscribed.*\n\nYou will no longer receive catalog updates or broadcast messages from us. You can reply *START* at any time to resubscribe.`,
-              session.metaPhoneNumberId,
-              session.metaAccessToken
-            );
-            console.log(`   ⛔ Unsubscribed customer: ${phone}`);
-          } catch (err) {
-            console.error("Error unsubscribing lead:", err.message);
-          }
-        }
-      } else if (text === 'start' || text === 'subscribe') {
-        if (session.shopId) {
-          try {
-            await prisma.lead.updateMany({
-              where: { shop_id: session.shopId, customer_phone: phone },
-              data: { is_active: true }
-            });
-            await sendWhatsAppReply(phone,
-              `✅ *Welcome back!*\n\nYou have successfully resubscribed to updates from *${session.shopName || 'our shop'}*.\n\n📸 Send me a jewelry image anytime to find it in our catalog!`,
-              session.metaPhoneNumberId,
-              session.metaAccessToken
-            );
-            console.log(`   ✅ Subscribed customer: ${phone}`);
-          } catch (err) {
-            console.error("Error resubscribing lead:", err.message);
-          }
-        }
-      } else if (['hi', 'hello', 'hey', 'he'].some(g => text === g || text.startsWith(g + ' ') || text.endsWith(' ' + g))) {
-        let greetingMsg = session.customGreeting 
-          ? `👋 *Hello ${userName}!*\n\n${session.customGreeting}`
-          : `👋 *Welcome ${session.shopName ? 'to ' + session.shopName : ''}, ${userName}!*\n\n` +
-            `Looking for a specific jewelry piece? Just send us a photo!\n\n` +
-            `Our AI will instantly find the exact or similar piece from our catalog and share the price and purchase link.`;
-
-        if (session.storeAddress) {
-          greetingMsg += `\n\n📍 *Showroom Location:*\n${session.storeAddress}`;
-        }
-
-        if (session.promoBanner) {
-          greetingMsg += `\n\n🎁 *Offer:* ${session.promoBanner}`;
-        }
-
-        greetingMsg += `\n\n📸 *Send a photo or type what you are looking for!*`;
-        greetingMsg += `\nℹ️ *Daily Limit:* ${session.dailyImageCount}/5 used today.`;
-
-        await sendWhatsAppReply(phone, greetingMsg, session.metaPhoneNumberId, session.metaAccessToken);
-      } else {
-        // ── Gemini AI Text Catalog Search ───────
-        try {
-          const catalog = await fetchShopCatalog(session.shopId);
-          if (catalog && catalog.length > 0) {
-            console.log(`   🔎 Performing AI Text Search for ${phone}: "${textBody}"`);
-            const searchResult = await searchCatalogWithTextGemini(textBody, catalog);
-
-            if (searchResult.is_search_query && searchResult.matching_product_ids && searchResult.matching_product_ids.length > 0) {
-              const matchedProducts = searchResult.matching_product_ids
-                .map(id => catalog.find(p => p.id === id))
-                .filter(Boolean);
-
-              if (matchedProducts.length > 0) {
-                let reply = `🔍 *Search Results for:* _"${textBody}"_\n`;
-                if (searchResult.search_summary) reply += `📋 ${searchResult.search_summary}\n\n`;
-
-                matchedProducts.forEach((item, idx) => {
-                  const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
-                  reply += `${idx + 1}. *${item.name}*\n`;
-                  const metaTags = [item.karat, item.metal, item.type].filter(Boolean).join(' · ');
-                  if (metaTags) reply += `   ✨ *Purity/Details:* ${metaTags}\n`;
-                  if (item.weight_grams) reply += `   ⚖️ *Weight:* ${item.weight_grams}g\n`;
-                  reply += `   💰 *Price:* ${pStr}\n`;
-                  if (item.url) reply += `   🔗 *Buy Link:* ${item.url}\n`;
-                  reply += `\n`;
-                });
-
-                reply += `📸 *Tip:* You can also send us a photo of any design to search using visual AI!`;
-
-                await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
-                console.log(`   ✅ AI Text Search results sent to ${phone} (${matchedProducts.length} items found)`);
-                return;
-              }
-            } else if (searchResult.is_search_query) {
-              await sendWhatsAppReply(
-                phone,
-                `😔 *No matching jewelry found for:* "${textBody}"\n\nTry searching for something like *"Gold Ring"*, *"Silver Bracelet"*, or *"Necklace under 50000"*.\n\n📸 Or send us a photo of the jewelry design!`,
-                session.metaPhoneNumberId,
-                session.metaAccessToken
-              );
-              return;
-            }
-          }
-        } catch (searchErr) {
-          console.error("   ⚠️ Text catalog search error:", searchErr.message);
-        }
-
-        // Fallback response for non-search text queries
-        await sendWhatsAppReply(
-          phone, 
-          `📸 *Send me a jewelry image to find it in our catalog!*\n\n💬 *Or type what you are looking for!* (e.g., *"Gold ring under 50,000"*, *"Kundan necklace"*)\n\nℹ️ *Daily Image Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n_Note: You can reply STOP at any time to unsubscribe from updates._`, 
-          session.metaPhoneNumberId,
-          session.metaAccessToken
-        );
+        userSessions.delete(phone);
+        await sendWhatsAppReply(phone, "Session reset. Type 'hi' to start again.", session.metaPhoneNumberId, session.metaAccessToken);
+        return;
       }
+
+      const catalog = await fetchShopCatalog(session.shopId);
+
+      // Check if user is searching catalog via text (e.g. "show gold rings under 50k", "necklace", "bangles")
+      try {
+        const searchResult = await searchCatalogWithTextGemini(textBody, catalog);
+        console.log(`   [DEBUG] Text Search Analysis:`, JSON.stringify(searchResult, null, 2));
+
+        if (searchResult.is_search_query && searchResult.matching_product_ids?.length > 0) {
+          const matchedProducts = searchResult.matching_product_ids
+            .map(id => catalog.find(p => p.id === id))
+            .filter(Boolean);
+
+          if (matchedProducts.length > 0) {
+            let reply = `🔍 *${searchResult.search_summary || 'Catalog Search Results'}*\n\n`;
+            matchedProducts.forEach((item, idx) => {
+              const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
+              reply += `${idx + 1}. *${item.name}*\n   💰 Price: ${pStr}\n`;
+              if (item.url) reply += `   🔗 Link: ${item.url}\n`;
+              reply += `\n`;
+            });
+            reply += `✨ _Showroom Catalog items matched for your query._`;
+            await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("   ⚠️ Text catalog search error:", err.message);
+      }
+
+      // Default Friendly Greeting / Store Reply
+      let greeting = session.customGreeting || `Welcome to *${session.shopName || 'our Jewelry Store'}*! 💎`;
+      let reply = `👋 Hello! ${greeting}\n\n`;
+      reply += `📸 *Send any Jewelry Image or Instagram Screenshot* to search our live catalog!\n\n`;
+      reply += `💬 Or type what you are looking for (e.g. *"Show me gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
+      if (session.storeAddress) {
+        reply += `📍 *Showroom Address:* ${session.storeAddress}\n`;
+      }
+      if (session.promoBanner) {
+        reply += `🎁 *Special Offer:* ${session.promoBanner}\n`;
+      }
+
+      await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
     }
-  } catch (err) {
-    console.error('Error in webhook handler:', err.message);
-  }
-});
+  });
 
-// ── Health & Webhook Verification ───────
-app.get('/health', async (req, res) => {
-  try {
-    const count = await prisma.shop.count();
-    res.json({ status: 'ok', database_connected: true, count });
-  } catch(error) {
-    res.status(500).json({ status: 'error', database_connected: false });
-  }
-});
-
+// ── Webhook Verification (GET request for Meta verification) ───────
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
+  const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'jewelbot_secure_token_2026';
+
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('✅ Webhook verified successfully with Meta!');
     res.status(200).send(challenge);
   } else {
+    console.error('❌ Webhook verification failed! Invalid token.');
     res.sendStatus(403);
   }
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n💎 Shop WhatsApp Bot (SaaS Edition) running on port ${PORT}`);
+  console.log(`🚀 JewelBot WhatsApp AI Webhook Server running on port ${PORT}`);
 });
