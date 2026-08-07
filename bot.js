@@ -61,7 +61,7 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
     try {
       const data = await prisma.shop.findFirst({
         where: { meta_phone_number_id: metaPhoneNumberId },
-        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true }
+        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true }
       });
       if (data) {
         console.log(`   [DEBUG] Found shop by meta_phone_number_id!`);
@@ -79,7 +79,7 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
         where: {
           whatsapp_number: { contains: cleanPhone }
         },
-        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true }
+        select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true }
       });
       if (data) {
         console.log(`   [DEBUG] Found shop by phone number!`);
@@ -94,7 +94,7 @@ async function getShopByPhoneNumber(phone, metaPhoneNumberId) {
   try {
     const shops = await prisma.shop.findMany({
       take: 2,
-      select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true }
+      select: { id: true, name: true, meta_phone_number_id: true, meta_access_token: true, custom_greeting: true, store_address: true, promo_banner: true }
     });
     if (shops.length === 1) {
       console.log(`   [DEBUG] Fallback: Auto-assigning single existing shop: ${shops[0].name}`);
@@ -422,6 +422,9 @@ app.post('/webhook', async (req, res) => {
         session.shopName = shop.name;
         session.metaPhoneNumberId = shop.meta_phone_number_id;
         session.metaAccessToken = shop.meta_access_token;
+        session.customGreeting = shop.custom_greeting;
+        session.storeAddress = shop.store_address;
+        session.promoBanner = shop.promo_banner;
         console.log(`   🛒 Assigned to shop: ${shop.name}`);
       } else {
         console.log(`   ❌ FAILED to assign shop! session.shopId is NULL`);
@@ -534,16 +537,24 @@ app.post('/webhook', async (req, res) => {
           }
         }
       } else if (['hi', 'hello', 'hey', 'he'].some(g => text === g || text.startsWith(g + ' ') || text.endsWith(' ' + g))) {
-        await sendWhatsAppReply(phone,
-          `👋 *Welcome ${session.shopName ? 'to ' + session.shopName : ''}, ${userName}!*\n\n` +
-          `Looking for a specific jewelry piece? Just send us a photo!\n\n` +
-          `Our AI will instantly find the exact or similar piece from our catalog and share the price and purchase link.\n\n` +
-          `📸 *Send an image to get started!*\n` +
-          `ℹ️ *Daily Search Limit:* 5 images per day (Today used: ${session.dailyImageCount}/5)\n\n` +
-          `_Note: Reply STOP at any time to unsubscribe from broadcast updates._`,
-          session.metaPhoneNumberId,
-          session.metaAccessToken
-        );
+        let greetingMsg = session.customGreeting 
+          ? `👋 *Hello ${userName}!*\n\n${session.customGreeting}`
+          : `👋 *Welcome ${session.shopName ? 'to ' + session.shopName : ''}, ${userName}!*\n\n` +
+            `Looking for a specific jewelry piece? Just send us a photo!\n\n` +
+            `Our AI will instantly find the exact or similar piece from our catalog and share the price and purchase link.`;
+
+        if (session.storeAddress) {
+          greetingMsg += `\n\n📍 *Showroom Location:*\n${session.storeAddress}`;
+        }
+
+        if (session.promoBanner) {
+          greetingMsg += `\n\n🎁 *Offer:* ${session.promoBanner}`;
+        }
+
+        greetingMsg += `\n\n📸 *Send a photo or type what you are looking for!*`;
+        greetingMsg += `\nℹ️ *Daily Limit:* ${session.dailyImageCount}/5 used today.`;
+
+        await sendWhatsAppReply(phone, greetingMsg, session.metaPhoneNumberId, session.metaAccessToken);
       } else {
         // ── Gemini AI Text Catalog Search ───────
         try {

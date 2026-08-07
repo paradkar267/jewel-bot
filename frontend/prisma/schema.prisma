@@ -14,6 +14,9 @@ model Shop {
   password             String?   // Hashed password for NextAuth
   meta_phone_number_id String?
   meta_access_token    String?
+  custom_greeting      String?
+  store_address        String?
+  promo_banner         String?
   created_at           DateTime  @default(now())
 
   products             Product[]

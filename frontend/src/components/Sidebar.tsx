@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Gem, PlusCircle, FileSpreadsheet, Users, History, RefreshCw, Store, LogOut, Shield, LayoutDashboard } from 'lucide-react';
+import { Gem, PlusCircle, FileSpreadsheet, Users, History, RefreshCw, Store, LogOut, Shield, LayoutDashboard, Settings } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 
 interface SidebarProps {
@@ -21,6 +21,7 @@ export default function Sidebar({ shopName, userEmail }: SidebarProps) {
     { name: 'My Customers', href: '/dashboard/leads', icon: Users },
     { name: 'Broadcast History', href: '/dashboard/broadcasts', icon: History },
     { name: 'Website Auto-Sync', href: '/dashboard/sync', icon: RefreshCw },
+    { name: 'Bot & Store Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   const menuItems = userEmail === 'bizleap1@gmail.com'
