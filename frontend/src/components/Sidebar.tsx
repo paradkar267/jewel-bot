@@ -25,7 +25,7 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
 
   const baseItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Catalog', href: '/dashboard/catalog', icon: Gem },
+    { name: 'Jewelry Catalog', href: '/dashboard/catalog', icon: Gem },
     { name: 'Add Single Item', href: '/dashboard/add', icon: PlusCircle },
     { name: 'Bulk Upload (CSV)', href: '/dashboard/bulk', icon: FileSpreadsheet },
     { name: 'My Customers', href: '/dashboard/leads', icon: Users },
@@ -55,39 +55,39 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
     <div className="flex flex-col justify-between h-full py-4">
       <div>
         {/* Brand & Logo */}
-        <div className="h-14 px-6 border-b border-white/5 flex items-center justify-between">
+        <div className="h-16 px-6 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-gradient-to-br from-amber-200 to-amber-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(251,191,36,0.2)] flex-shrink-0">
-              <Store className="h-4 w-4 text-[#0a0a0a]" />
+            <div className="h-9 w-9 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.25)] shrink-0">
+              <Store className="h-5 w-5 text-black fill-black" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-black text-white tracking-wider uppercase">JewelBot</span>
-              <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
-                {isAdminPage ? 'Platform Control' : 'Vault Panel'}
+              <span className="text-base font-black text-white tracking-wide gold-text-gradient uppercase">JEWELBOT</span>
+              <span className="text-[10px] font-extrabold text-amber-400/80 tracking-widest uppercase">
+                {isAdminPage ? 'SUPER ADMIN PANEL' : 'AI SHOWROOM PORTAL'}
               </span>
             </div>
           </div>
           {/* Close button for mobile drawer */}
           <button 
             onClick={() => setIsMobileOpen(false)}
-            className="md:hidden p-2 text-gray-400 hover:text-white rounded-lg"
+            className="md:hidden p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Shop Badge */}
+        {/* Shop Active Badge */}
         {shopName && (
-          <div className="px-6 py-3 border-b border-white/5 bg-white/[0.01]">
-            <div className="flex items-center text-xs font-bold text-amber-500 truncate">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shadow-[0_0_5px_rgba(16,185,129,0.5)] flex-shrink-0"></div>
+          <div className="px-6 py-3 border-b border-white/5 bg-gradient-to-r from-amber-500/5 via-transparent to-transparent">
+            <div className="flex items-center text-xs font-extrabold text-amber-300 truncate">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0"></span>
               <span className="truncate">{shopName}</span>
             </div>
           </div>
         )}
 
         {/* Navigation Links */}
-        <nav className="p-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-220px)]">
+        <nav className="p-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-230px)]">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -97,14 +97,14 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className={`flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 group ${
+                className={`flex items-center px-4 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all duration-200 group ${
                   isActive
-                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_10px_rgba(251,191,36,0.05)]'
-                    : 'text-gray-400 hover:text-white hover:bg-white/[0.03] border border-transparent'
+                    ? 'bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent text-amber-300 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
+                    : 'text-gray-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
                 }`}
               >
-                <Icon className={`h-4 w-4 mr-3 transition-colors flex-shrink-0 ${
-                  isActive ? 'text-amber-400' : 'text-gray-400 group-hover:text-white'
+                <Icon className={`h-4 w-4 mr-3 transition-colors shrink-0 ${
+                  isActive ? 'text-amber-400' : 'text-gray-400 group-hover:text-amber-400'
                 }`} />
                 <span className="truncate">{item.name}</span>
               </Link>
@@ -114,11 +114,11 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
       </div>
 
       {/* Bottom Profile & Logout */}
-      <div className="p-4 border-t border-white/5 bg-white/[0.01]">
+      <div className="p-4 border-t border-white/10 bg-black/40">
         {userEmail && (
           <div className="px-4 mb-3">
-            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Logged in as</p>
-            <p className="text-xs text-gray-400 truncate font-medium mt-0.5">{userEmail}</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Connected Account</p>
+            <p className="text-xs font-bold text-gray-300 truncate font-mono mt-0.5">{userEmail}</p>
           </div>
         )}
         <LogoutButton />
@@ -128,44 +128,48 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
 
   return (
     <>
-      {/* 📱 Mobile Top Navigation Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 h-16 bg-[#111111]/90 backdrop-blur-md border-b border-white/10 px-4 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 bg-gradient-to-br from-amber-200 to-amber-500 rounded-lg flex items-center justify-center shadow-[0_0_10px_rgba(251,191,36,0.2)]">
-            <Store className="h-4 w-4 text-[#0a0a0a]" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-black text-white tracking-wider uppercase">JewelBot</span>
-            {shopName && <span className="text-[10px] text-amber-400 font-bold truncate max-w-[140px]">{shopName}</span>}
+      {/* Mobile Top Header Navigation Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#080808]/90 backdrop-blur-xl border-b border-amber-500/20 z-40 px-4 flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsMobileOpen(true)}
+            className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors border border-white/10"
+            aria-label="Open Navigation Menu"
+          >
+            <Menu className="h-5 w-5 text-amber-400" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 bg-gradient-to-br from-amber-300 to-amber-500 rounded-lg flex items-center justify-center shadow-md">
+              <Store className="h-4 w-4 text-black font-bold fill-black" />
+            </div>
+            <span className="text-sm font-black text-white gold-text-gradient uppercase tracking-wider">JEWELBOT</span>
           </div>
         </div>
 
-        <button
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 active:scale-95 transition-all"
-          aria-label="Toggle Navigation Menu"
-        >
-          {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </header>
+        {shopName && (
+          <span className="text-xs font-extrabold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30 truncate max-w-[140px]">
+            {shopName}
+          </span>
+        )}
+      </div>
 
-      {/* 📱 Mobile Drawer Backdrop */}
+      {/* Mobile Touch Navigation Drawer Backdrop */}
       {isMobileOpen && (
-        <div
+        <div 
           onClick={() => setIsMobileOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+          className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 transition-opacity duration-300"
         />
       )}
 
-      {/* 📱 Mobile Slide-Out Drawer */}
-      <aside className={`md:hidden fixed inset-y-0 left-0 z-50 w-72 bg-[#111111] border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+      {/* Mobile Navigation Drawer Container */}
+      <div className={`md:hidden fixed top-0 left-0 bottom-0 w-72 bg-[#0d0d0d] border-r border-amber-500/20 z-50 transition-transform duration-300 ease-in-out shadow-2xl ${
         isMobileOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {renderNavContent()}
-      </aside>
+      </div>
 
-      {/* 💻 Desktop Fixed Sidebar */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-64 bg-[#111111] border-r border-white/5 flex-col justify-between">
+      {/* Desktop Desktop Permanent Left Navigation Sidebar */}
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-[#0c0c0c] border-r border-amber-500/20 z-30 shadow-2xl">
         {renderNavContent()}
       </aside>
     </>
