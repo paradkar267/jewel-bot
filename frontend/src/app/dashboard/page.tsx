@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import { fetchLiveIndiaMetalRates } from '@/app/actions/live-rates';
 import { 
   Gem, Users, History, Activity, Sparkles, PlusCircle, 
   FileSpreadsheet, MessageSquare, ArrowRight, UserCheck, Calendar,
@@ -73,7 +74,9 @@ export default async function DashboardPage() {
   const totalSuccess = totalCampaignsStats.reduce((sum, c) => sum + c.success_count, 0);
   const averageSuccessRate = totalRecipients > 0 ? Math.round((totalSuccess / totalRecipients) * 100) : 100;
 
-  const currentGoldRate = shop?.gold_rate_per_gram || 13750;
+  const liveRatesRes = await fetchLiveIndiaMetalRates();
+  const liveRates = liveRatesRes.rates;
+  const currentGoldRate = shop?.gold_rate_per_gram ? Number(shop.gold_rate_per_gram) : liveRates.gold_22k;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -87,14 +90,14 @@ export default async function DashboardPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">Live India Jewelry Market Standard Rates</span>
+              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">Live Real-Time India Jewelry Market Rates (API Live)</span>
             </div>
             <div className="text-xs sm:text-sm font-extrabold text-white flex flex-wrap items-center gap-2 sm:gap-3 mt-0.5">
-              <span>👑 22K Gold: <strong className="text-amber-400">₹13,750 /g</strong></span>
+              <span>👑 22K Gold: <strong className="text-amber-400">₹{liveRates.gold_22k.toLocaleString('en-IN')} /g</strong></span>
               <span className="text-gray-600 hidden sm:inline">|</span>
-              <span>🥇 24K Pure: <strong className="text-amber-300">₹14,750 /g</strong></span>
+              <span>🥇 24K Pure: <strong className="text-amber-300">₹{liveRates.gold_24k.toLocaleString('en-IN')} /g</strong></span>
               <span className="text-gray-600 hidden sm:inline">|</span>
-              <span>⚪ Silver: <strong className="text-gray-300">₹240 /g</strong></span>
+              <span>⚪ Silver: <strong className="text-gray-300">₹{liveRates.silver.toLocaleString('en-IN')} /g</strong></span>
             </div>
           </div>
         </div>
