@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { fetchLiveIndiaMetalRates } from '@/app/actions/live-rates';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import { getActiveAnnouncements } from '@/app/actions/admin-features';
 import { 
   Gem, Users, History, Activity, Sparkles, PlusCircle, 
   FileSpreadsheet, MessageSquare, ArrowRight, UserCheck, Calendar,
