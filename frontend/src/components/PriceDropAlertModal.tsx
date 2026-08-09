@@ -42,7 +42,7 @@ export default function PriceDropAlertModal({ isOpen, onClose, currentGoldRate =
         setResult({
           success: true,
           message: res.message || `Alert successfully sent to ${res.totalRecipients} customer leads!`,
-          isSimulated: res.isSimulated
+          isSimulated: (res as any).isSimulated
         });
       } else {
         setResult({
