@@ -15,10 +15,13 @@ export async function createSyncProducts(products: any[]) {
 
   const rowsToInsert = products.map((row: any) => ({
     shop_id: shopId,
-    name: row.name || 'Unnamed Item',
-    type: 'other',
-    metal: '',
-    price: row.price || null,
+    name: row.name || 'Unnamed Jewelry Item',
+    type: row.type || 'other',
+    metal: row.metal || 'gold',
+    karat: row.karat || '22K',
+    weight_grams: row.weight_grams ? parseFloat(row.weight_grams) : null,
+    making_charge_percent: row.making_charge_percent ? parseFloat(row.making_charge_percent) : 12,
+    price: row.price ? parseFloat(row.price) : null,
     image_url: row.image_url || null,
     url: row.url || null
   }));
