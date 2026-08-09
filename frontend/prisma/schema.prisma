@@ -80,3 +80,14 @@ model BroadcastCampaign {
 
   @@map("broadcast_campaigns")
 }
+
+model Announcement {
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  content    String
+  type       String   @default("info") // info, alert, promo
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  @@map("announcements")
+}

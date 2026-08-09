@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Gem, PlusCircle, FileSpreadsheet, Users, History, RefreshCw, Store, Shield, LayoutDashboard, Settings, Menu, X } from 'lucide-react';
+import { Gem, PlusCircle, FileSpreadsheet, Users, History, RefreshCw, Store, Shield, LayoutDashboard, Settings, Menu, X, Megaphone, Activity } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 
 interface SidebarProps {
@@ -34,15 +34,20 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
     { name: 'Bot & Store Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
-  const adminItem = { name: 'Admin Console', href: '/dashboard/admin', icon: Shield };
+  const adminItems = [
+    { name: 'Shops Console', href: '/dashboard/admin', icon: Shield },
+    { name: 'Announcements', href: '/dashboard/admin/announcements', icon: Megaphone },
+    { name: 'Showroom Audit Logs', href: '/dashboard/admin/activity', icon: Activity },
+    { name: 'Export CSV Reports', href: '/dashboard/admin/export', icon: FileSpreadsheet },
+  ];
 
   let menuItems;
 
   if (isAdminPage) {
-    menuItems = [adminItem];
+    menuItems = adminItems;
   } else {
     menuItems = (isSuperAdmin || userEmail === 'bizleap1@gmail.com')
-      ? [adminItem, ...baseItems]
+      ? [adminItems[0], ...baseItems]
       : baseItems;
   }
 
