@@ -104,26 +104,31 @@ export async function getAdminActivityLogs() {
   try {
     await verifyAdmin();
 
-    const [recentProducts, recentLeads, recentBroadcasts] = await Promise.all([
+    const [shops, recentProducts, recentLeads, recentBroadcasts] = await Promise.all([
+      prisma.shop.findMany({
+        select: { id: true, name: true, owner_email: true },
+        orderBy: { name: 'asc' }
+      }),
       prisma.product.findMany({
-        take: 15,
+        take: 50,
         orderBy: { created_at: 'desc' },
-        include: { shop: { select: { name: true, owner_email: true } } }
+        include: { shop: { select: { id: true, name: true, owner_email: true } } }
       }),
       prisma.lead.findMany({
-        take: 15,
+        take: 50,
         orderBy: { created_at: 'desc' },
-        include: { shop: { select: { name: true, owner_email: true } } }
+        include: { shop: { select: { id: true, name: true, owner_email: true } } }
       }),
       prisma.broadcastCampaign.findMany({
-        take: 15,
+        take: 50,
         orderBy: { created_at: 'desc' },
-        include: { shop: { select: { name: true, owner_email: true } } }
+        include: { shop: { select: { id: true, name: true, owner_email: true } } }
       }),
     ]);
 
     const activities: Array<{
       id: string;
+      shopId: string;
       type: 'product' | 'lead' | 'broadcast';
       shopName: string;
       title: string;
@@ -135,6 +140,7 @@ export async function getAdminActivityLogs() {
     recentProducts.forEach(p => {
       activities.push({
         id: `prod_${p.id}`,
+        shopId: p.shop_id,
         type: 'product',
         shopName: p.shop?.name || 'Jewelry Shop',
         title: `Added New Item: "${p.name}"`,
@@ -147,6 +153,7 @@ export async function getAdminActivityLogs() {
     recentLeads.forEach(l => {
       activities.push({
         id: `lead_${l.id}`,
+        shopId: l.shop_id,
         type: 'lead',
         shopName: l.shop?.name || 'Jewelry Shop',
         title: `Captured WhatsApp Customer Lead`,
@@ -159,6 +166,7 @@ export async function getAdminActivityLogs() {
     recentBroadcasts.forEach(b => {
       activities.push({
         id: `bcast_${b.id}`,
+        shopId: b.shop_id,
         type: 'broadcast',
         shopName: b.shop?.name || 'Jewelry Shop',
         title: `Dispatched WhatsApp Campaign`,
@@ -173,11 +181,12 @@ export async function getAdminActivityLogs() {
 
     return {
       success: true,
-      activities: activities.slice(0, 30)
+      shops,
+      activities: activities.slice(0, 100)
     };
 
   } catch (error: any) {
-    return { success: false, error: error.message, activities: [] };
+    return { success: false, error: error.message, shops: [], activities: [] };
   }
 }
 
