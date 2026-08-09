@@ -32,8 +32,11 @@ export async function triggerPriceDropWhatsAppBroadcast(data: {
     });
 
     if (!shop) {
-      throw new Error("Shop not found");
+      throw new Error("Shop record not found.");
     }
+
+    const senderId = shop.meta_phone_number_id || process.env.META_PHONE_NUMBER_ID;
+    const accessToken = shop.meta_access_token || process.env.META_ACCESS_TOKEN;
 
     // Fetch all active customer leads for this shop
     const leads = await prisma.lead.findMany({
@@ -43,7 +46,7 @@ export async function triggerPriceDropWhatsAppBroadcast(data: {
     if (leads.length === 0) {
       return {
         success: false,
-        error: "No active customer leads found to broadcast to. Customers will be logged automatically when they text your WhatsApp Bot!"
+        error: "No active customer leads found in your database. Customers will be logged automatically when they text your WhatsApp Bot!"
       };
     }
 
@@ -65,50 +68,56 @@ Aapki pasandida Gold Jewelry par aaj ₹2,500 - ₹10,000 tak ki bachat ho rahi 
 
     let successCount = 0;
     let failCount = 0;
+    const errors: string[] = [];
 
-    // If Meta Credentials exist, send real WhatsApp messages
-    if (shop.meta_phone_number_id && shop.meta_access_token) {
-      const url = `https://graph.facebook.com/v18.0/${shop.meta_phone_number_id}/messages`;
+    if (senderId && accessToken) {
+      const url = `https://graph.facebook.com/v20.0/${senderId}/messages`;
 
       for (const lead of leads) {
         try {
+          const formattedPhone = lead.customer_phone.replace(/\D/g, '');
           const res = await fetch(url, {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${shop.meta_access_token}`,
+              "Authorization": `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
               messaging_product: "whatsapp",
-              to: lead.customer_phone,
+              to: formattedPhone,
               type: "text",
               text: { body: messageText }
             })
           });
 
+          const errData = await res.json();
+
           if (res.ok) {
             successCount++;
           } else {
-            const errData = await res.json();
-            console.error(`Failed to send WhatsApp alert to ${lead.customer_phone}:`, errData);
             failCount++;
+            const errMsg = errData?.error?.message || "Meta API delivery error";
+            console.error(`Meta API Error for ${formattedPhone}:`, errData);
+            errors.push(`${formattedPhone}: ${errMsg}`);
           }
-        } catch (e) {
-          console.error(`Meta API Error sending to ${lead.customer_phone}:`, e);
+        } catch (e: any) {
           failCount++;
+          console.error(`Network Error sending to ${lead.customer_phone}:`, e);
+          errors.push(`${lead.customer_phone}: ${e.message}`);
         }
       }
     } else {
-      // Simulation mode if credentials not yet configured
-      successCount = leads.length;
-      failCount = 0;
+      return {
+        success: false,
+        error: "Meta WhatsApp API configuration is missing. Please configure Meta Phone Number ID and Access Token in Bot Settings."
+      };
     }
 
     // Record Broadcast Campaign in database
     await prisma.broadcastCampaign.create({
       data: {
         shop_id: shopId,
-        message_text: `📉 Gold Rate Drop Alert (₹${data.dropAmountPerGram}/g OFF) - Sent to ${leads.length} Customers`,
+        message_text: `📉 Gold Rate Drop Alert (₹${data.dropAmountPerGram}/g OFF) - Dispatched to ${leads.length} Customers`,
         total_recipients: leads.length,
         success_count: successCount,
         fail_count: failCount,
@@ -118,13 +127,20 @@ Aapki pasandida Gold Jewelry par aaj ₹2,500 - ₹10,000 tak ki bachat ho rahi 
     revalidatePath('/dashboard/broadcasts');
     revalidatePath('/dashboard');
 
+    if (successCount === 0 && errors.length > 0) {
+      return {
+        success: false,
+        error: `WhatsApp Delivery Failed for ${failCount} recipient(s): ${errors[0]}`
+      };
+    }
+
     return {
       success: true,
       totalRecipients: leads.length,
       successCount,
       failCount,
-      isSimulated: !shop.meta_phone_number_id || !shop.meta_access_token,
-      message: `Gold Rate Price Drop Alert broadcasted to ${leads.length} active customer leads!`
+      errors,
+      message: `Gold Rate Price Drop Alert dispatched to ${successCount} out of ${leads.length} customer leads!`
     };
 
   } catch (error: any) {
