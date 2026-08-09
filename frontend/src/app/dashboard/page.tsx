@@ -76,9 +76,13 @@ export default async function DashboardPage() {
   const totalSuccess = totalCampaignsStats.reduce((sum, c) => sum + c.success_count, 0);
   const averageSuccessRate = totalRecipients > 0 ? Math.round((totalSuccess / totalRecipients) * 100) : 100;
 
+  const announcementsPromise = typeof getActiveAnnouncements === 'function' 
+    ? getActiveAnnouncements() 
+    : Promise.resolve({ announcements: [] });
+
   const [liveRatesRes, announcementsRes] = await Promise.all([
     fetchLiveIndiaMetalRates(),
-    getActiveAnnouncements()
+    announcementsPromise
   ]);
   const liveRates = liveRatesRes.rates;
   const activeAnnouncements = announcementsRes.announcements || [];
