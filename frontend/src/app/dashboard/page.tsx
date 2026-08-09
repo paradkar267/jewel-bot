@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { fetchLiveIndiaMetalRates } from '@/app/actions/live-rates';
-import { getActiveAnnouncements } from '@/app/actions/admin-features';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { 
   Gem, Users, History, Activity, Sparkles, PlusCircle, 
   FileSpreadsheet, MessageSquare, ArrowRight, UserCheck, Calendar,
@@ -86,37 +86,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       
-      {/* Super Admin Global Announcements Banner */}
-      {activeAnnouncements.length > 0 && (
-        <div className="space-y-3">
-          {activeAnnouncements.map((a: any) => (
-            <div
-              key={a.id}
-              className={`p-4 rounded-2xl border flex items-start gap-3 shadow-lg ${
-                a.type === 'promo'
-                  ? 'bg-gradient-to-r from-purple-950/60 via-[#120f18] to-purple-950/40 border-purple-500/40 text-purple-200'
-                  : a.type === 'alert'
-                  ? 'bg-gradient-to-r from-rose-950/60 via-[#180f12] to-rose-950/40 border-rose-500/40 text-rose-200'
-                  : 'bg-gradient-to-r from-amber-950/60 via-[#18150f] to-amber-950/40 border-amber-500/40 text-amber-200'
-              }`}
-            >
-              <div className="p-2 rounded-xl bg-white/10 shrink-0">
-                <Megaphone className="w-5 h-5 text-amber-400" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/10 text-white tracking-wider">
-                    {a.type === 'promo' ? '🎁 Special Offer' : a.type === 'alert' ? '⚠️ Important Notice' : '📢 System Announcement'}
-                  </span>
-                  <span className="text-[10px] opacity-70">Platform Update</span>
-                </div>
-                <h3 className="text-sm font-extrabold text-white mt-1">{a.title}</h3>
-                <p className="text-xs opacity-90 mt-0.5 whitespace-pre-wrap">{a.content}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Super Admin Global Announcements Banner (Dismissable by Shop Owner) */}
+      <AnnouncementBanner announcements={activeAnnouncements} />
 
       {/* Real-Time Live Metal Benchmark Banner */}
       <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 via-[#12110c] to-amber-950/40 border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.12)] flex flex-col md:flex-row items-center justify-between gap-4">
