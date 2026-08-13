@@ -78,7 +78,7 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
       <button
         onClick={() => setIsOpen(true)}
         disabled={customerCount === 0}
-        className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-bold text-[#0a0a0a] bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-bold text-white bg-black hover:bg-neutral-800 shadow-sm border border-neutral-900 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         <Megaphone className="h-4 w-4 mr-2" />
         Broadcast Message ({customerCount})
@@ -86,24 +86,24 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
 
       {/* Modal Dialog */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#111111] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6 relative">
             
             {/* Close Button */}
             <button
               onClick={() => { if (!isSending) setIsOpen(false); }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-neutral-500 hover:text-black transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Header */}
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-white flex items-center">
-                <Megaphone className="w-5 h-5 text-amber-500 mr-2" />
+              <h3 className="text-xl font-bold text-neutral-900 flex items-center">
+                <Megaphone className="w-5 h-5 text-neutral-800 mr-2" />
                 Send Broadcast
               </h3>
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-neutral-500 text-xs mt-1">
                 This will send a WhatsApp message to {limit === 0 ? `all ${customerCount}` : `the first ${limit}`} customers currently in your list (sorted by most recent interactions).
               </p>
             </div>
@@ -111,11 +111,11 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
             {/* Form */}
             <form onSubmit={handleSend} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Send Limit</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Send Limit</label>
                 <select
                   value={limit}
                   onChange={(e) => setLimit(Number(e.target.value))}
-                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-sm cursor-pointer"
+                  className="block w-full bg-white border border-neutral-300 rounded-xl p-3 text-neutral-900 focus:outline-none focus:border-black transition-all text-sm cursor-pointer"
                   disabled={isSending || status.type === 'success'}
                 >
                   <option value={0}>All Customers ({customerCount})</option>
@@ -127,8 +127,8 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Campaign Image <span className="text-gray-500 text-xs">(Optional)</span>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Campaign Image <span className="text-neutral-450 text-xs">(Optional)</span>
                 </label>
                 
                 {/* Tabs */}
@@ -136,14 +136,14 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
                   <button
                     type="button"
                     onClick={() => { setUseUrl(false); setImageUrl(''); }}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition-all ${!useUrl ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-transparent border-white/5 text-gray-400 hover:text-white'}`}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${!useUrl ? 'bg-neutral-100 border-neutral-300 text-neutral-900' : 'bg-transparent border-neutral-200 text-neutral-500 hover:text-black'}`}
                   >
                     Upload File
                   </button>
                   <button
                     type="button"
                     onClick={() => { setUseUrl(true); setFile(null); setPreviewUrl(null); }}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition-all ${useUrl ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-transparent border-white/5 text-gray-400 hover:text-white'}`}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${useUrl ? 'bg-neutral-100 border-neutral-300 text-neutral-900' : 'bg-transparent border-neutral-200 text-neutral-500 hover:text-black'}`}
                   >
                     Image URL
                   </button>
@@ -152,7 +152,7 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
                 {/* Input Container */}
                 <div>
                   {!useUrl ? (
-                    <div className="border border-dashed border-white/10 rounded-xl p-4 flex flex-col items-center justify-center bg-white/[0.01] hover:bg-white/[0.03] transition-all cursor-pointer relative min-h-24">
+                    <div className="border border-dashed border-neutral-300 rounded-xl p-4 flex flex-col items-center justify-center bg-neutral-50 hover:bg-neutral-100 transition-all cursor-pointer relative min-h-24">
                       <input
                         type="file"
                         accept="image/*"
@@ -176,15 +176,15 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
                               setFile(null);
                               setPreviewUrl(null);
                             }}
-                            className="absolute top-0 right-1/4 bg-red-500/80 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+                            className="absolute top-0 right-1/4 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 transition-colors cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <>
-                          <Upload className="w-6 h-6 text-amber-500/80 mb-1.5" />
-                          <span className="text-xs text-gray-400">Click or drag image to upload</span>
+                          <Upload className="w-6 h-6 text-neutral-600 mb-1.5" />
+                          <span className="text-xs text-neutral-500">Click or drag image to upload</span>
                         </>
                       )}
                     </div>
@@ -194,7 +194,7 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
                       placeholder="https://example.com/images/new-pendant.jpg"
-                      className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all text-sm"
+                      className="block w-full bg-white border border-neutral-300 rounded-xl p-3 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-black transition-all text-sm"
                       disabled={isSending || status.type === 'success'}
                     />
                   )}
@@ -202,15 +202,15 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Message Body</label>
-                <p className="text-[10px] text-amber-500/80 mb-2">Tip: Use <strong>{`{name}`}</strong> to dynamically insert the customer's WhatsApp name.</p>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Message Body</label>
+                <p className="text-[10px] text-neutral-500 mb-2">Tip: Use <strong>{`{name}`}</strong> to dynamically insert the customer's WhatsApp name.</p>
                 <textarea
                   rows={4}
                   required
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Hello {name}! We've just added new gold items to our vault. Tap here to view: https://example.com"
-                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all resize-none text-sm"
+                  className="block w-full bg-white border border-neutral-300 rounded-xl p-3 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-black transition-all resize-none text-sm"
                   disabled={isSending || status.type === 'success'}
                 />
               </div>
@@ -218,9 +218,9 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
               {/* Status Indicator */}
               {status.message && (
                 <div className={`p-4 rounded-xl flex items-start ${
-                  status.type === 'error' ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 
-                  status.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 
-                  'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+                  status.type === 'error' ? 'bg-red-50 border border-red-200 text-red-750' : 
+                  status.type === 'success' ? 'bg-emerald-50 border border-emerald-250 text-emerald-800' : 
+                  'bg-neutral-100 border border-neutral-250 text-neutral-700'
                 }`}>
                   {status.type === 'error' && <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />}
                   {status.type === 'success' && <CheckCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />}
@@ -235,14 +235,14 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
                   type="button"
                   onClick={() => setIsOpen(false)}
                   disabled={isSending}
-                  className="px-4 py-2 border border-white/10 rounded-xl text-sm font-medium text-gray-400 bg-white/5 hover:text-white transition-colors disabled:opacity-50"
+                  className="px-4 py-2 border border-neutral-250 rounded-xl text-sm font-medium text-neutral-600 hover:text-black bg-neutral-100 hover:bg-neutral-200 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSending || !message.trim() || status.type === 'success'}
-                  className="inline-flex items-center justify-center px-5 py-2 bg-gradient-to-r from-amber-400 to-amber-600 text-[#0a0a0a] font-bold text-sm rounded-xl hover:from-amber-300 hover:to-amber-500 transition-all disabled:opacity-50"
+                  className="inline-flex items-center justify-center px-5 py-2 bg-black text-white hover:bg-neutral-800 font-bold text-sm rounded-xl transition-all border border-neutral-900 disabled:opacity-50 cursor-pointer shadow-sm"
                 >
                   {isSending ? (
                     <>

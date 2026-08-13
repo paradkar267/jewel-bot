@@ -12,10 +12,10 @@ export default function BroadcastHeaderActions({ currentGoldRate }: { currentGol
       <div className="flex items-center gap-3">
         <button
           onClick={() => setIsAlertModalOpen(true)}
-          className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-extrabold text-xs text-emerald-300 bg-gradient-to-r from-emerald-500/20 via-emerald-600/20 to-emerald-500/10 border border-emerald-500/40 hover:brightness-110 shadow-lg shadow-emerald-500/10 transition-all"
+          className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-bold text-xs text-neutral-800 hover:text-black bg-neutral-100 hover:bg-neutral-200 border border-neutral-250 shadow-sm transition-all cursor-pointer"
         >
-          <TrendingDown className="h-4 w-4 mr-2 text-emerald-400" />
-          📉 Trigger Price Drop WhatsApp Alert
+          <TrendingDown className="h-4 w-4 mr-2 text-neutral-700" />
+          <span>Trigger Price Drop WhatsApp Alert</span>
         </button>
       </div>
 

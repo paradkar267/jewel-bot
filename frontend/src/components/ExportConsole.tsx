@@ -154,8 +154,8 @@ export default function ExportConsole() {
       {status && (
         <div className={`p-4 rounded-xl border text-xs font-bold flex items-center gap-2 ${
           status.type === "success" 
-            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-            : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+            ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
+            : "bg-rose-50 border-rose-200 text-rose-800"
         }`}>
           {status.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
           <span>{status.message}</span>
@@ -165,14 +165,14 @@ export default function ExportConsole() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Report 1: Registered Shops Master */}
-        <div className="p-6 rounded-2xl bg-gradient-to-b from-[#141414] to-[#0d0d0d] border border-amber-500/30 shadow-xl space-y-4 hover:border-amber-500/50 transition-all group">
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200 shadow-sm space-y-4 hover:border-neutral-400 transition-all group">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/30 text-amber-400">
+            <div className="p-3 bg-neutral-100 rounded-xl border border-neutral-250 text-neutral-800">
               <Store className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">Registered Showrooms Master Directory</h2>
-              <p className="text-xs text-gray-400">Directory of all registered shops, owner emails, WhatsApp numbers, Meta credentials status & inventory sizes.</p>
+              <h2 className="text-base font-extrabold text-neutral-900">Registered Showrooms Master Directory</h2>
+              <p className="text-xs text-neutral-500">Directory of all registered shops, owner emails, WhatsApp numbers, Meta credentials status & inventory sizes.</p>
             </div>
           </div>
 
@@ -180,32 +180,32 @@ export default function ExportConsole() {
             <button
               onClick={() => handleDownloadCSV('shops', 'Registered Showrooms Directory')}
               disabled={downloading === 'shops_csv'}
-              className="py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-neutral-100 hover:bg-neutral-200 border border-neutral-250 text-neutral-600 hover:text-black font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'shops_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-amber-400" />}
+              {downloading === 'shops_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-neutral-700" />}
               <span>Export CSV</span>
             </button>
 
             <button
               onClick={() => handleDownloadPDF('shops', 'Registered Showrooms Directory')}
               disabled={downloading === 'shops_pdf'}
-              className="py-2.5 px-3 bg-gradient-to-r from-amber-400 to-amber-500 text-black font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-black hover:bg-neutral-800 text-white font-extrabold text-xs rounded-xl shadow-sm hover:scale-[1.01] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'shops_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> : <FileText className="w-3.5 h-3.5 fill-black text-black" />}
+              {downloading === 'shops_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <FileText className="w-3.5 h-3.5 fill-white text-white" />}
               <span>Download PDF 📄</span>
             </button>
           </div>
         </div>
 
         {/* Report 2: Full Products & Catalog Master */}
-        <div className="p-6 rounded-2xl bg-gradient-to-b from-[#141414] to-[#0d0d0d] border border-amber-500/30 shadow-xl space-y-4 hover:border-amber-500/50 transition-all group">
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200 shadow-sm space-y-4 hover:border-neutral-400 transition-all group">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/30 text-amber-400">
+            <div className="p-3 bg-neutral-100 rounded-xl border border-neutral-250 text-neutral-800">
               <Gem className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">Platform Jewelry Catalog Master Report</h2>
-              <p className="text-xs text-gray-400">Complete itemized list of all products, metal types (22K, 18K), weights in grams, and calculated prices across all shops.</p>
+              <h2 className="text-base font-extrabold text-neutral-900">Platform Jewelry Catalog Master Report</h2>
+              <p className="text-xs text-neutral-500">Complete itemized list of all products, metal types (22K, 18K), weights in grams, and calculated prices across all shops.</p>
             </div>
           </div>
 
@@ -213,32 +213,32 @@ export default function ExportConsole() {
             <button
               onClick={() => handleDownloadCSV('products', 'Jewelry Catalog Master Report')}
               disabled={downloading === 'products_csv'}
-              className="py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-neutral-100 hover:bg-neutral-200 border border-neutral-250 text-neutral-600 hover:text-black font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'products_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-amber-400" />}
+              {downloading === 'products_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-neutral-700" />}
               <span>Export CSV</span>
             </button>
 
             <button
               onClick={() => handleDownloadPDF('products', 'Jewelry Catalog Master Report')}
               disabled={downloading === 'products_pdf'}
-              className="py-2.5 px-3 bg-gradient-to-r from-amber-400 to-amber-500 text-black font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-black hover:bg-neutral-800 text-white font-extrabold text-xs rounded-xl shadow-sm hover:scale-[1.01] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'products_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> : <FileText className="w-3.5 h-3.5 fill-black text-black" />}
+              {downloading === 'products_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <FileText className="w-3.5 h-3.5 fill-white text-white" />}
               <span>Download PDF 📄</span>
             </button>
           </div>
         </div>
 
         {/* Report 3: Customer Leads Master */}
-        <div className="p-6 rounded-2xl bg-gradient-to-b from-[#141414] to-[#0d0d0d] border border-amber-500/30 shadow-xl space-y-4 hover:border-amber-500/50 transition-all group">
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200 shadow-sm space-y-4 hover:border-neutral-400 transition-all group">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/30 text-emerald-400">
+            <div className="p-3 bg-neutral-100 rounded-xl border border-neutral-250 text-neutral-800">
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">Customer Leads Directory Report</h2>
-              <p className="text-xs text-gray-400">Database of all WhatsApp customer leads captured by the AI bots across all showrooms, message counts & last interaction dates.</p>
+              <h2 className="text-base font-extrabold text-neutral-900">Customer Leads Directory Report</h2>
+              <p className="text-xs text-neutral-500">Database of all WhatsApp customer leads captured by the AI bots across all showrooms, message counts & last interaction dates.</p>
             </div>
           </div>
 
@@ -246,32 +246,32 @@ export default function ExportConsole() {
             <button
               onClick={() => handleDownloadCSV('leads', 'Customer Leads Directory Report')}
               disabled={downloading === 'leads_csv'}
-              className="py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-neutral-100 hover:bg-neutral-200 border border-neutral-250 text-neutral-600 hover:text-black font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'leads_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-emerald-400" />}
+              {downloading === 'leads_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-neutral-700" />}
               <span>Export CSV</span>
             </button>
 
             <button
               onClick={() => handleDownloadPDF('leads', 'Customer Leads Directory Report')}
               disabled={downloading === 'leads_pdf'}
-              className="py-2.5 px-3 bg-gradient-to-r from-emerald-400 to-emerald-500 text-black font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-black hover:bg-neutral-800 text-white font-extrabold text-xs rounded-xl shadow-sm hover:scale-[1.01] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'leads_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> : <FileText className="w-3.5 h-3.5 fill-black text-black" />}
+              {downloading === 'leads_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <FileText className="w-3.5 h-3.5 fill-white text-white" />}
               <span>Download PDF 📄</span>
             </button>
           </div>
         </div>
 
         {/* Report 4: Broadcast Campaigns Master */}
-        <div className="p-6 rounded-2xl bg-gradient-to-b from-[#141414] to-[#0d0d0d] border border-amber-500/30 shadow-xl space-y-4 hover:border-amber-500/50 transition-all group">
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200 shadow-sm space-y-4 hover:border-neutral-400 transition-all group">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/30 text-purple-400">
+            <div className="p-3 bg-neutral-100 rounded-xl border border-neutral-250 text-neutral-800">
               <Send className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-white">Broadcast Campaigns Audit Report</h2>
-              <p className="text-xs text-gray-400">Audit log of all WhatsApp broadcast campaigns sent by shop owners, recipient counts, and delivery success rates.</p>
+              <h2 className="text-base font-extrabold text-neutral-900">Broadcast Campaigns Audit Report</h2>
+              <p className="text-xs text-neutral-500">Audit log of all WhatsApp broadcast campaigns sent by shop owners, recipient counts, and delivery success rates.</p>
             </div>
           </div>
 
@@ -279,18 +279,18 @@ export default function ExportConsole() {
             <button
               onClick={() => handleDownloadCSV('broadcasts', 'Broadcast Campaigns Audit Report')}
               disabled={downloading === 'broadcasts_csv'}
-              className="py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-neutral-100 hover:bg-neutral-200 border border-neutral-250 text-neutral-600 hover:text-black font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'broadcasts_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-purple-400" />}
+              {downloading === 'broadcasts_csv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-neutral-700" />}
               <span>Export CSV</span>
             </button>
 
             <button
               onClick={() => handleDownloadPDF('broadcasts', 'Broadcast Campaigns Audit Report')}
               disabled={downloading === 'broadcasts_pdf'}
-              className="py-2.5 px-3 bg-gradient-to-r from-purple-400 to-purple-500 text-black font-extrabold text-xs rounded-xl shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 bg-black hover:bg-neutral-800 text-white font-extrabold text-xs rounded-xl shadow-sm hover:scale-[1.01] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {downloading === 'broadcasts_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> : <FileText className="w-3.5 h-3.5 fill-black text-black" />}
+              {downloading === 'broadcasts_pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <FileText className="w-3.5 h-3.5 fill-white text-white" />}
               <span>Download PDF 📄</span>
             </button>
           </div>

@@ -77,59 +77,59 @@ export default function BulkUploadPage() {
   return (
     <div className="max-w-4xl mx-auto pb-10 animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">Bulk Upload</h1>
-        <p className="text-gray-400 mt-1">Upload hundreds of items instantly using a CSV spreadsheet.</p>
+        <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Bulk Upload</h1>
+        <p className="text-neutral-500 mt-1">Upload hundreds of items instantly using a CSV spreadsheet.</p>
       </div>
 
-      <div className="bg-[#111111] shadow-2xl rounded-2xl border border-white/5 overflow-hidden p-8">
+      <div className="bg-white shadow-sm rounded-2xl border border-neutral-200 overflow-hidden p-8">
         
         {/* Step 1: Download Template */}
-        <div className="mb-10 pb-10 border-b border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="mb-10 pb-10 border-b border-neutral-200 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <h3 className="text-xl font-bold text-white flex items-center">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 text-sm mr-3">1</span>
+            <h3 className="text-xl font-bold text-neutral-900 flex items-center">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-neutral-100 border border-neutral-250 text-neutral-800 text-sm mr-3">1</span>
               Download the Template
             </h3>
-            <p className="text-gray-400 mt-2 text-sm max-w-md">
+            <p className="text-neutral-500 mt-2 text-sm max-w-md">
               To ensure data imports correctly, please download our official CSV template and fill your catalog details in it.
             </p>
           </div>
           <button 
             onClick={handleDownloadTemplate}
-            className="flex-shrink-0 inline-flex items-center px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium text-white transition-colors"
+            className="flex-shrink-0 inline-flex items-center px-5 py-2.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-250 rounded-xl font-medium text-neutral-700 hover:text-black transition-colors cursor-pointer"
           >
-            <Download className="w-4 h-4 mr-2 text-amber-400" />
+            <Download className="w-4 h-4 mr-2 text-neutral-600" />
             Download CSV Template
           </button>
         </div>
 
         {/* Step 2: Upload File */}
         <div>
-          <h3 className="text-xl font-bold text-white flex items-center mb-6">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 text-sm mr-3">2</span>
+          <h3 className="text-xl font-bold text-neutral-900 flex items-center mb-6">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-neutral-100 border border-neutral-250 text-neutral-800 text-sm mr-3">2</span>
             Upload Completed File
           </h3>
 
-          <div className={`group relative bg-[#0a0a0a] border-2 border-dashed ${file ? 'border-amber-500/50 bg-amber-500/5' : 'border-white/10 hover:border-white/30'} rounded-xl flex flex-col items-center justify-center p-12 transition-colors`}>
+          <div className={`group relative bg-neutral-50 border-2 border-dashed ${file ? 'border-neutral-850 bg-neutral-100' : 'border-neutral-250 hover:border-neutral-400'} rounded-xl flex flex-col items-center justify-center p-12 transition-colors`}>
             {file ? (
               <div className="text-center">
-                <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileSpreadsheet className="h-8 w-8 text-amber-400" />
+                <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-neutral-200">
+                  <FileSpreadsheet className="h-8 w-8 text-neutral-800" />
                 </div>
-                <p className="text-lg font-bold text-white">{file.name}</p>
-                <p className="text-sm text-gray-500 mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+                <p className="text-lg font-bold text-neutral-900">{file.name}</p>
+                <p className="text-sm text-neutral-505 mt-1">{(file.size / 1024).toFixed(1)} KB</p>
                 
                 {!isProcessing && status.type !== 'success' && (
-                  <p className="text-xs text-amber-500/80 mt-4 cursor-pointer hover:underline">Click to change file</p>
+                  <p className="text-xs text-neutral-800 font-extrabold mt-4 cursor-pointer hover:underline">Click to change file</p>
                 )}
               </div>
             ) : (
               <div className="text-center">
-                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Upload className="h-8 w-8 text-gray-400 group-hover:text-amber-400 transition-colors" />
+                <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform border border-neutral-200">
+                  <Upload className="h-8 w-8 text-neutral-500 group-hover:text-neutral-950 transition-colors" />
                 </div>
-                <p className="text-base font-medium text-gray-300">Drag & Drop your CSV file here</p>
-                <p className="mt-1 text-sm text-gray-500">or click to browse</p>
+                <p className="text-base font-medium text-neutral-700">Drag & Drop your CSV file here</p>
+                <p className="mt-1 text-sm text-neutral-500">or click to browse</p>
               </div>
             )}
             
@@ -145,9 +145,9 @@ export default function BulkUploadPage() {
 
           {status.message && (
             <div className={`mt-6 p-4 rounded-xl flex items-center ${
-              status.type === 'error' ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 
-              status.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 
-              'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+              status.type === 'error' ? 'bg-rose-50 border border-rose-200 text-rose-800' : 
+              status.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 
+              'bg-neutral-50 border border-neutral-200 text-neutral-800'
             }`}>
               {status.type === 'error' && <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />}
               {status.type === 'success' && <CheckCircle className="w-5 h-5 mr-3 flex-shrink-0" />}
@@ -160,7 +160,7 @@ export default function BulkUploadPage() {
             <button 
               onClick={handleUpload}
               disabled={!file || isProcessing || status.type === 'success'}
-              className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent rounded-xl shadow-lg text-base font-bold text-[#0a0a0a] bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 focus:outline-none transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-black hover:bg-neutral-800 focus:outline-none transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isProcessing ? 'Processing Batch...' : 'Upload & Save to Vault'}
             </button>

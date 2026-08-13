@@ -23,11 +23,11 @@ export default async function AdminAnnouncementsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white flex items-center tracking-tight">
-            <Megaphone className="h-8 w-8 text-amber-500 mr-3" />
+          <h1 className="text-3xl font-extrabold text-neutral-900 flex items-center tracking-tight">
+            <Megaphone className="h-8 w-8 text-neutral-850 mr-3" />
             Global Platform Announcements
           </h1>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-neutral-505">
             Post system-wide notifications, festive offers, or feature updates visible to all registered showroom owners.
           </p>
         </div>

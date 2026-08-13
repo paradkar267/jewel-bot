@@ -195,16 +195,16 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     <div>
       {/* Top Toolbar: Select All & Bulk Action Banner */}
       {products.length > 0 && (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 bg-[#111111] border border-white/5 p-4 rounded-xl">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 bg-white border border-neutral-200 p-4 rounded-xl shadow-sm">
           <div className="flex items-center gap-3">
             <button
               onClick={toggleSelectAll}
-              className="flex items-center gap-2 text-xs font-bold text-gray-300 hover:text-amber-400 bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-lg transition-all border border-white/5"
+              className="flex items-center gap-2 text-xs font-bold text-neutral-600 hover:text-black bg-neutral-105 hover:bg-neutral-200 px-3.5 py-2 rounded-lg transition-all border border-neutral-250 cursor-pointer"
             >
               {selectedIds.length === products.length ? (
-                <CheckSquare className="w-4 h-4 text-amber-400" />
+                <CheckSquare className="w-4 h-4 text-black" />
               ) : (
-                <Square className="w-4 h-4 text-gray-400" />
+                <Square className="w-4 h-4 text-neutral-450" />
               )}
               <span>
                 {selectedIds.length === products.length
@@ -214,7 +214,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
             </button>
 
             {selectedIds.length > 0 && (
-              <span className="text-xs font-medium text-amber-400/90 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">
+              <span className="text-xs font-medium text-neutral-800 bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-250">
                 {selectedIds.length} item{selectedIds.length > 1 ? 's' : ''} selected
               </span>
             )}
@@ -225,7 +225,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
               <button
                 onClick={handleBulkDelete}
                 disabled={isBulkDeleting}
-                className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow-lg shadow-red-900/30 transition-all border border-red-500/30 disabled:opacity-50"
+                className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow-md transition-all border border-red-500/30 disabled:opacity-50 cursor-pointer"
               >
                 {isBulkDeleting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -237,7 +237,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
 
               <button
                 onClick={() => setSelectedIds([])}
-                className="p-2 text-gray-400 hover:text-white bg-white/5 rounded-lg border border-white/5"
+                className="p-2 text-neutral-500 hover:text-black bg-neutral-100 rounded-lg border border-neutral-250 cursor-pointer"
                 title="Clear Selection"
               >
                 <X className="w-4 h-4" />
@@ -249,10 +249,10 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
 
       {/* Product Grid */}
       {products.length === 0 ? (
-        <div className="text-center py-16 bg-[#111111] border border-white/5 rounded-2xl">
-          <Package className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-white mb-1">No Jewelry Items Added Yet</h3>
-          <p className="text-gray-400 text-xs max-w-sm mx-auto">
+        <div className="text-center py-16 bg-white border border-neutral-200 rounded-2xl shadow-sm">
+          <Package className="w-12 h-12 text-neutral-400 mx-auto mb-3" />
+          <h3 className="text-lg font-bold text-neutral-900 mb-1">No Jewelry Items Added Yet</h3>
+          <p className="text-neutral-550 text-xs max-w-sm mx-auto">
             Click "Add Jewelry" to create your first catalog item or sync your website.
           </p>
         </div>
@@ -263,24 +263,24 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
             return (
               <div
                 key={product.id}
-                className={`bg-[#111111] border ${isSelected ? 'border-red-500/80 shadow-lg shadow-red-500/10' : 'border-white/5 hover:border-amber-500/30'} rounded-2xl overflow-hidden transition-all duration-300 group flex flex-col justify-between relative`}
+                className={`bg-white border ${isSelected ? 'border-red-500/80 shadow-md shadow-red-500/5' : 'border-neutral-200 hover:border-neutral-400'} rounded-2xl overflow-hidden transition-all duration-300 group flex flex-col justify-between relative shadow-sm`}
               >
                 <div>
                   {/* Image Section */}
-                  <div className="relative h-48 w-full bg-[#0a0a0a] overflow-hidden flex items-center justify-center border-b border-white/5">
+                  <div className="relative h-48 w-full bg-neutral-50 overflow-hidden flex items-center justify-center border-b border-neutral-150">
                     {/* Checkbox Overlay Top-Left */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSelectProduct(product.id);
                       }}
-                      className="absolute top-3 left-3 z-10 p-1.5 rounded-lg bg-black/70 hover:bg-black border border-white/20 transition-all shadow-md backdrop-blur-md"
+                      className="absolute top-3 left-3 z-10 p-1.5 rounded-lg bg-white/90 hover:bg-white border border-neutral-250 transition-all shadow-sm backdrop-blur-md cursor-pointer"
                       title={isSelected ? "Deselect item" : "Select item for bulk delete"}
                     >
                       {isSelected ? (
-                        <CheckSquare className="w-4 h-4 text-red-500 fill-red-500/20" />
+                        <CheckSquare className="w-4 h-4 text-red-605 fill-red-500/10" />
                       ) : (
-                        <Square className="w-4 h-4 text-gray-400 hover:text-white" />
+                        <Square className="w-4 h-4 text-neutral-500 hover:text-neutral-800" />
                       )}
                     </button>
 
@@ -291,24 +291,24 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                         className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSelected ? 'opacity-80' : ''}`}
                       />
                     ) : (
-                      <div className="text-gray-600 text-xs font-semibold">No Image Provided</div>
+                      <div className="text-neutral-400 text-xs font-semibold">No Image Provided</div>
                     )}
 
                     {/* Metal / Karat Badge */}
                     <div className="absolute top-3 left-12 flex gap-1.5 flex-wrap z-0">
                       {product.karat && (
-                        <span className="px-2.5 py-1 bg-amber-500/90 text-black text-[10px] font-extrabold rounded-full uppercase shadow-md backdrop-blur-md">
+                        <span className="px-2.5 py-1 bg-black text-white text-[10px] font-extrabold rounded-full uppercase shadow-sm">
                           {product.karat}
                         </span>
                       )}
-                      <span className="px-2.5 py-1 bg-black/80 text-amber-300 text-[10px] font-bold rounded-full uppercase border border-amber-500/30 backdrop-blur-md">
+                      <span className="px-2.5 py-1 bg-neutral-100 text-neutral-800 text-[10px] font-extrabold rounded-full uppercase border border-neutral-250 shadow-sm">
                         {product.metal || 'Gold'}
                       </span>
                     </div>
 
                     {/* Category Badge */}
                     <div className="absolute top-3 right-3">
-                      <span className="px-2.5 py-1 bg-black/80 text-gray-300 text-[10px] font-medium rounded-full border border-white/10 backdrop-blur-md capitalize">
+                      <span className="px-2.5 py-1 bg-white/95 text-neutral-700 text-[10px] font-medium rounded-full border border-neutral-200 shadow-sm capitalize">
                         {product.type || 'Jewelry'}
                       </span>
                     </div>
@@ -316,18 +316,18 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
 
                   {/* Details Section */}
                   <div className="p-4 space-y-2">
-                    <h3 className="font-bold text-white text-base truncate group-hover:text-amber-400 transition-colors">
+                    <h3 className="font-bold text-neutral-900 text-base truncate group-hover:text-black transition-colors">
                       {product.name}
                     </h3>
 
                     <div className="flex items-center justify-between pt-1">
-                      <div className="text-amber-400 font-extrabold text-lg">
+                      <div className="text-neutral-950 font-black text-lg">
                         {product.price ? `₹${Number(product.price).toLocaleString('en-IN')}` : 'Ask for Price'}
                       </div>
 
                       {product.weight_grams && (
-                        <div className="text-[11px] font-semibold text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg flex items-center gap-1 border border-white/5">
-                          <Scale className="w-3 h-3 text-amber-500" />
+                        <div className="text-[11px] font-semibold text-neutral-600 bg-neutral-50 px-2 py-0.5 rounded-lg flex items-center gap-1 border border-neutral-200">
+                          <Scale className="w-3 h-3 text-neutral-700" />
                           <span>{Number(product.weight_grams)}g</span>
                         </div>
                       )}
@@ -336,25 +336,25 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                 </div>
 
                 {/* Card Actions Footer */}
-                <div className="px-4 py-3 bg-[#0a0a0a]/50 border-t border-white/5 flex items-center justify-between text-xs">
+                <div className="px-4 py-3 bg-neutral-50 border-t border-neutral-150 flex items-center justify-between text-xs">
                   {product.url ? (
                     <a
                       href={product.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-400 hover:text-amber-400 flex items-center font-medium transition-colors text-[11px]"
+                      className="text-neutral-600 hover:text-black flex items-center font-medium transition-colors text-[11px]"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
                       View Store Page
                     </a>
                   ) : (
-                    <span className="text-[10px] text-gray-600">No URL</span>
+                    <span className="text-[10px] text-neutral-400">No URL</span>
                   )}
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => startEdit(product)}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition-all border border-transparent hover:border-amber-500/30"
+                      className="p-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-black transition-all border border-neutral-200 cursor-pointer"
                       title="Edit Item"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -363,7 +363,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     <button
                       onClick={() => handleDelete(product.id, product.name)}
                       disabled={isDeleting === product.id}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-300 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
+                      className="p-1.5 rounded-lg bg-neutral-100 hover:bg-red-50 hover:border-red-200 text-neutral-600 hover:text-red-600 transition-all border border-neutral-200 cursor-pointer"
                       title="Delete Item"
                     >
                       {isDeleting === product.id ? (
@@ -382,25 +382,25 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
 
       {/* Edit Product Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#111111] border border-amber-500/20 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-neutral-200 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-200 mb-5">
               <div className="flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-amber-400" />
-                <h2 className="text-lg font-bold text-white">Edit Jewelry Details</h2>
+                <Edit3 className="w-5 h-5 text-neutral-900" />
+                <h2 className="text-lg font-bold text-neutral-900">Edit Jewelry Details</h2>
               </div>
               <button
                 onClick={() => setEditingProduct(null)}
-                className="p-1 text-gray-400 hover:text-white rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                className="p-1 text-neutral-500 hover:text-black rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-xs">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-750 text-xs">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -409,7 +409,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
             <form onSubmit={handleSaveEdit} className="space-y-4">
               {/* Product Name */}
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
                   Jewelry Name *
                 </label>
                 <input
@@ -417,7 +417,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                   value={editForm.name}
                   onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                   placeholder="e.g. Royal 22K Kundan Gold Necklace"
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-905 placeholder-neutral-400 focus:outline-none focus:border-black"
                   required
                 />
               </div>
@@ -425,24 +425,24 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
               {/* Category & Custom Category Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
                     Category (Type)
                   </label>
                   <select
                     value={editForm.type}
                     onChange={e => setEditForm({ ...editForm, type: e.target.value })}
-                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 capitalize"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-black capitalize cursor-pointer"
                   >
                     {standardTypes.map(t => (
-                      <option key={t} value={t} className="bg-black text-white capitalize">{t}</option>
+                      <option key={t} value={t} className="capitalize">{t}</option>
                     ))}
-                    <option value="custom" className="bg-black text-amber-400 font-bold">✍️ Type Custom Category...</option>
+                    <option value="custom" className="font-bold">✍️ Type Custom Category...</option>
                   </select>
                 </div>
 
                 {editForm.type === 'custom' && (
                   <div>
-                    <label className="block text-xs font-semibold text-amber-400 mb-1">
+                    <label className="block text-xs font-semibold text-neutral-900 mb-1">
                       Type Custom Category Name
                     </label>
                     <input
@@ -450,7 +450,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                       value={editForm.customCategory}
                       onChange={e => setEditForm({ ...editForm, customCategory: e.target.value })}
                       placeholder="e.g. Brooch, Kamarbandh, Panchdhatu"
-                      className="w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500"
+                      className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 placeholder-neutral-450 focus:outline-none focus:border-black"
                       required
                     />
                   </div>
@@ -460,24 +460,24 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
               {/* Metal & Karat Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
                     Metal
                   </label>
                   <select
                     value={editForm.metal}
                     onChange={e => setEditForm({ ...editForm, metal: e.target.value })}
-                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 capitalize"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-black capitalize cursor-pointer"
                   >
                     {standardMetals.map(m => (
-                      <option key={m} value={m} className="bg-black text-white capitalize">{m}</option>
+                      <option key={m} value={m} className="capitalize">{m}</option>
                     ))}
-                    <option value="custom" className="bg-black text-amber-400 font-bold">✍️ Type Custom Metal...</option>
+                    <option value="custom" className="font-bold">✍️ Type Custom Metal...</option>
                   </select>
                 </div>
 
                 {editForm.metal === 'custom' && (
                   <div>
-                    <label className="block text-xs font-semibold text-amber-400 mb-1">
+                    <label className="block text-xs font-semibold text-neutral-900 mb-1">
                       Type Custom Metal Name
                     </label>
                     <input
@@ -485,27 +485,27 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                       value={editForm.customMetal}
                       onChange={e => setEditForm({ ...editForm, customMetal: e.target.value })}
                       placeholder="e.g. Rose Gold, Panchdhatu"
-                      className="w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500"
+                      className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 placeholder-neutral-450 focus:outline-none focus:border-black"
                       required
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
                     Karat (Purity)
                   </label>
                   <select
                     value={editForm.karat}
                     onChange={e => setEditForm({ ...editForm, karat: e.target.value })}
-                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-black cursor-pointer"
                   >
-                    <option value="24K" className="bg-black text-white">24K (99.9% Pure)</option>
-                    <option value="22K" className="bg-black text-white">22K (91.6% Hallmark)</option>
-                    <option value="18K" className="bg-black text-white">18K (75.0% Gold)</option>
-                    <option value="14K" className="bg-black text-white">14K (58.3% Gold)</option>
-                    <option value="10K" className="bg-black text-white">10K Gold</option>
-                    <option value="925" className="bg-black text-white">925 Sterling Silver</option>
+                    <option value="24K">24K (99.9% Pure)</option>
+                    <option value="22K">22K (91.6% Hallmark)</option>
+                    <option value="18K">18K (75.0% Gold)</option>
+                    <option value="14K">14K (58.3% Gold)</option>
+                    <option value="10K">10K Gold</option>
+                    <option value="925">925 Sterling Silver</option>
                   </select>
                 </div>
               </div>
@@ -513,8 +513,8 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
               {/* Weight, Making Charges & Calculated Price */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1">
-                    <Scale className="w-3 h-3 text-amber-400" /> Weight (Grams)
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center gap-1">
+                    <Scale className="w-3 h-3 text-neutral-800" /> Weight (Grams)
                   </label>
                   <input
                     type="number"
@@ -522,12 +522,12 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     value={editForm.weight_grams}
                     onChange={e => setEditForm({ ...editForm, weight_grams: e.target.value })}
                     placeholder="e.g. 10.5"
-                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-black"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
                     Making Charge (%)
                   </label>
                   <input
@@ -536,12 +536,12 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     value={editForm.making_charge_percent}
                     onChange={e => setEditForm({ ...editForm, making_charge_percent: e.target.value })}
                     placeholder="e.g. 12"
-                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-black"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-amber-400 mb-1">
+                  <label className="block text-xs font-semibold text-neutral-900 mb-1">
                     Price (₹)
                   </label>
                   <input
@@ -549,14 +549,14 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     value={editForm.price}
                     onChange={e => setEditForm({ ...editForm, price: e.target.value })}
                     placeholder="e.g. 154000"
-                    className="w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-black"
                   />
                 </div>
               </div>
 
               {/* Store Product URL */}
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
                   Product Link (Buy URL)
                 </label>
                 <input
@@ -564,36 +564,36 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                   value={editForm.url}
                   onChange={e => setEditForm({ ...editForm, url: e.target.value })}
                   placeholder="https://yourstore.com/item/123"
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 placeholder-neutral-450 focus:outline-none focus:border-black"
                 />
               </div>
 
               {/* Image Preview & File Upload */}
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
                   Jewelry Photo
                 </label>
                 
                 <div className="flex items-center gap-4">
                   {editForm.image_url ? (
-                    <div className="relative h-16 w-16 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+                    <div className="relative h-16 w-16 rounded-xl overflow-hidden border border-neutral-200 flex-shrink-0">
                       <img src={editForm.image_url} alt="Preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => setEditForm({ ...editForm, image_url: null })}
-                        className="absolute top-0.5 right-0.5 p-0.5 bg-black/80 rounded-full text-red-400"
+                        className="absolute top-0.5 right-0.5 p-0.5 bg-black/80 rounded-full text-red-400 cursor-pointer"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </div>
                   ) : (
-                    <div className="h-16 w-16 rounded-xl bg-[#0a0a0a] border border-dashed border-white/20 flex items-center justify-center text-gray-500 text-[10px] text-center p-1">
+                    <div className="h-16 w-16 rounded-xl bg-neutral-50 border border-dashed border-neutral-300 flex items-center justify-center text-neutral-400 text-[10px] text-center p-1">
                       No Image
                     </div>
                   )}
 
-                  <label className="flex-1 cursor-pointer bg-[#0a0a0a] border border-white/10 hover:border-amber-500/40 rounded-xl p-3 flex items-center justify-center gap-2 text-xs font-semibold text-gray-300 hover:text-amber-400 transition-colors">
-                    <Upload className="w-4 h-4 text-amber-500" />
+                  <label className="flex-1 cursor-pointer bg-neutral-50 border border-neutral-300 hover:border-neutral-400 rounded-xl p-3 flex items-center justify-center gap-2 text-xs font-semibold text-neutral-700 hover:text-black transition-colors">
+                    <Upload className="w-4 h-4 text-neutral-800" />
                     <span>Upload New Photo (Max 2MB)</span>
                     <input
                       type="file"
@@ -606,11 +606,11 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
               </div>
 
               {/* Form Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold text-xs transition-colors"
+                  className="px-4 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold text-xs transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -618,7 +618,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-xs shadow-lg shadow-amber-500/20 transition-all border border-amber-400/30 disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black hover:bg-neutral-800 text-white font-bold text-xs shadow-md transition-all border border-neutral-900 disabled:opacity-50 cursor-pointer"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

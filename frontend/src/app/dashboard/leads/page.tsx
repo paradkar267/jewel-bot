@@ -32,13 +32,13 @@ export default async function LeadsPage() {
     <div className="animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">My Customers</h1>
-          <p className="text-gray-400 mt-1">People who have interacted with your bot</p>
+          <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">My Customers</h1>
+          <p className="text-neutral-500 mt-1">People who have interacted with your bot</p>
         </div>
         <BroadcastModal customerCount={leads.length} />
       </div>
 
-      <div className="bg-[#111111]/80 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/5 overflow-hidden">
+      <div className="bg-white shadow-sm rounded-2xl border border-neutral-200 overflow-hidden">
         <CustomerTable initialLeads={serializedLeads} />
       </div>
     </div>

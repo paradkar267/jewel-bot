@@ -94,30 +94,30 @@ export default function SyncPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/30 text-amber-400">
+          <div className="p-3 bg-neutral-100 rounded-2xl border border-neutral-250 text-neutral-850">
             <Globe className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white gold-text-gradient tracking-tight">Website Auto-Sync Engine</h1>
-            <p className="text-xs sm:text-sm text-gray-400 mt-0.5">Automatically extract, parse, & import products from any jewelry e-commerce website (Shopify, WooCommerce, Custom Store).</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">Website Auto-Sync Engine</h1>
+            <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">Automatically extract, parse, & import products from any jewelry e-commerce website (Shopify, WooCommerce, Custom Store).</p>
           </div>
         </div>
       </div>
 
       {/* Main Container */}
-      <div className="bg-gradient-to-b from-[#121212] via-[#0d0d0d] to-[#080808] shadow-2xl rounded-3xl border border-amber-500/20 overflow-hidden p-6 sm:p-8 space-y-8">
+      <div className="bg-white shadow-sm rounded-3xl border border-neutral-200 overflow-hidden p-6 sm:p-8 space-y-8">
         
         {/* Step 1: Enter URL */}
         <div>
-          <h3 className="text-base sm:text-lg font-extrabold text-white flex items-center mb-4">
-            <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-amber-500 text-black text-xs font-black mr-3 shadow-md shadow-amber-500/30">1</span>
+          <h3 className="text-base sm:text-lg font-extrabold text-neutral-900 flex items-center mb-4">
+            <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-black text-white text-xs font-black mr-3 shadow-sm">1</span>
             Enter E-Commerce Website URL
           </h3>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Globe className="h-5 w-5 text-amber-400/70" />
+                <Globe className="h-5 w-5 text-neutral-500" />
               </div>
               <input
                 type="url"
@@ -125,43 +125,43 @@ export default function SyncPage() {
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleScrape()}
                 placeholder="https://yourjewelryshop.com or Shopify store URL"
-                className="block w-full pl-11 pr-4 py-3.5 bg-black/60 border border-white/10 rounded-2xl text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-medium"
+                className="block w-full pl-11 pr-4 py-3.5 bg-white border border-neutral-300 rounded-2xl text-neutral-900 text-sm placeholder-neutral-400 focus:ring-2 focus:ring-black focus:border-black transition-all font-medium"
               />
             </div>
 
             <button
               onClick={handleScrape}
               disabled={!url.trim() || isScraping}
-              className="px-8 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black font-extrabold text-sm rounded-2xl shadow-xl shadow-amber-500/25 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
+              className="px-8 py-3.5 bg-black hover:bg-neutral-800 text-white font-extrabold text-sm rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-sm"
             >
-              {isScraping ? <Loader2 className="w-5 h-5 animate-spin text-black" /> : <Sparkles className="w-5 h-5 fill-black text-black" />}
+              {isScraping ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Sparkles className="w-5 h-5 fill-white text-white" />}
               <span>{isScraping ? 'Scanning Store...' : 'Scan Website'}</span>
             </button>
           </div>
 
           {/* Quick Examples Helper */}
-          <div className="mt-3 flex items-center gap-2 text-[11px] text-gray-500 font-semibold">
+          <div className="mt-3 flex items-center gap-2 text-[11px] text-neutral-500 font-semibold">
             <span>Supports:</span>
-            <span className="bg-white/5 px-2 py-0.5 rounded-md border border-white/5 text-gray-400">Shopify API</span>
-            <span className="bg-white/5 px-2 py-0.5 rounded-md border border-white/5 text-gray-400">WooCommerce</span>
-            <span className="bg-white/5 px-2 py-0.5 rounded-md border border-white/5 text-gray-400">XML Sitemaps</span>
-            <span className="bg-white/5 px-2 py-0.5 rounded-md border border-white/5 text-gray-400">Direct Page AI</span>
+            <span className="bg-neutral-105 px-2 py-0.5 rounded-md border border-neutral-200 text-neutral-600 font-bold">Shopify API</span>
+            <span className="bg-neutral-105 px-2 py-0.5 rounded-md border border-neutral-200 text-neutral-600 font-bold">WooCommerce</span>
+            <span className="bg-neutral-105 px-2 py-0.5 rounded-md border border-neutral-200 text-neutral-600 font-bold">XML Sitemaps</span>
+            <span className="bg-neutral-105 px-2 py-0.5 rounded-md border border-neutral-200 text-neutral-600 font-bold">Direct Page AI</span>
           </div>
 
           {/* Status Message Alert */}
           {status.message && (
             <div className={`mt-6 p-4 rounded-2xl border text-xs sm:text-sm font-bold flex items-center gap-3 ${
-              status.type === 'error' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 
-              status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 
-              'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              status.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 
+              status.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 
+              'bg-neutral-50 border-neutral-200 text-neutral-800'
             }`}>
-              {status.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />}
-              {status.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />}
-              {status.type === 'idle' && <Loader2 className="w-5 h-5 text-amber-400 shrink-0 animate-spin" />}
+              {status.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-700 shrink-0" />}
+              {status.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-700 shrink-0" />}
+              {status.type === 'idle' && <Loader2 className="w-5 h-5 text-neutral-700 shrink-0 animate-spin" />}
               <div className="flex-1">
                 <span>{status.message}</span>
                 {engineUsed && (
-                  <span className="ml-2 bg-amber-500/20 text-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-amber-500/30 uppercase">
+                  <span className="ml-2 bg-neutral-100 text-neutral-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-neutral-250 uppercase">
                     Engine: {engineUsed}
                   </span>
                 )}
@@ -172,21 +172,21 @@ export default function SyncPage() {
 
         {/* Step 2: Review & Save Extracted Products */}
         {scrapedData && scrapedData.length > 0 && (
-          <div className="pt-8 border-t border-white/10 space-y-6 animate-in slide-in-from-bottom-4">
+          <div className="pt-8 border-t border-neutral-200 space-y-6 animate-in slide-in-from-bottom-4">
             
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-neutral-50 p-4 rounded-2xl border border-neutral-200">
               <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-amber-500 text-black text-xs font-black shadow-md">2</span>
+                <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-black text-white text-xs font-black shadow-sm">2</span>
                 <div>
-                  <h3 className="text-base font-extrabold text-white">Review & Select Products ({selectedIndices.size}/{scrapedData.length} Selected)</h3>
-                  <p className="text-xs text-gray-400">Metal, Karat, Category, & Weight automatically detected by AI.</p>
+                  <h3 className="text-base font-extrabold text-neutral-900">Review & Select Products ({selectedIndices.size}/{scrapedData.length} Selected)</h3>
+                  <p className="text-xs text-neutral-500">Metal, Karat, Category, & Weight automatically detected by AI.</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                 <button
                   onClick={toggleSelectAll}
-                  className="text-xs font-extrabold text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-3.5 py-2 rounded-xl border border-amber-500/30 transition-all"
+                  className="text-xs font-extrabold text-neutral-700 hover:text-black bg-neutral-100 hover:bg-neutral-200 px-3.5 py-2 rounded-xl border border-neutral-250 transition-all cursor-pointer"
                 >
                   {selectedIndices.size === scrapedData.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -194,9 +194,9 @@ export default function SyncPage() {
                 <button
                   onClick={handleSaveToDatabase}
                   disabled={isSaving || selectedIndices.size === 0}
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-400 to-emerald-500 text-black font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-500/20 hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2.5 bg-black hover:bg-neutral-800 text-white font-extrabold text-xs sm:text-sm rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-sm"
                 >
-                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : <Database className="w-4 h-4 text-black fill-black" />}
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Database className="w-4 h-4 text-white fill-white" />}
                   <span>Import {selectedIndices.size} Products</span>
                 </button>
               </div>
@@ -213,21 +213,21 @@ export default function SyncPage() {
                     onClick={() => toggleItemSelect(i)}
                     className={`rounded-2xl border transition-all cursor-pointer overflow-hidden flex flex-col relative group ${
                       isSelected 
-                        ? 'bg-gradient-to-b from-[#181818] to-[#0f0f0f] border-amber-500/50 shadow-xl shadow-amber-500/10' 
-                        : 'bg-[#0a0a0a] border-white/5 opacity-60 hover:opacity-100'
+                        ? 'bg-white border-neutral-800 shadow-md' 
+                        : 'bg-white border-neutral-200 opacity-60 hover:opacity-100 shadow-sm'
                     }`}
                   >
                     {/* Checkbox badge */}
                     <div className="absolute top-3 right-3 z-10">
                       <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
-                        isSelected ? 'bg-amber-500 text-black font-extrabold shadow-md' : 'bg-black/60 border border-white/20 text-transparent'
+                        isSelected ? 'bg-black text-white font-extrabold shadow-sm' : 'bg-white border border-neutral-350 text-transparent'
                       }`}>
                         <Check className="w-4 h-4 stroke-[3]" />
                       </div>
                     </div>
 
                     {/* Image */}
-                    <div className="aspect-video w-full relative bg-black/60 overflow-hidden">
+                    <div className="aspect-video w-full relative bg-neutral-100 overflow-hidden">
                       {item.image_url ? (
                         <img 
                           src={item.image_url} 
@@ -238,8 +238,8 @@ export default function SyncPage() {
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 bg-white/[0.02]">
-                          <Gem className="w-8 h-8 mb-1 opacity-40" />
+                        <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 bg-neutral-100">
+                          <Gem className="w-8 h-8 mb-1 opacity-40 text-neutral-500" />
                           <span className="text-[10px] font-bold uppercase tracking-wider">No Image</span>
                         </div>
                       )}
@@ -249,33 +249,33 @@ export default function SyncPage() {
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                          <span className="text-[10px] font-extrabold text-neutral-850 uppercase tracking-widest bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-250">
                             {item.type}
                           </span>
                           {item.price && (
-                            <span className="text-sm font-black text-emerald-400">
+                            <span className="text-sm font-extrabold text-neutral-900">
                               ₹{item.price.toLocaleString('en-IN')}
                             </span>
                           )}
                         </div>
 
-                        <h4 className="text-xs font-bold text-white line-clamp-2 leading-snug">{item.name}</h4>
+                        <h4 className="text-xs font-bold text-neutral-900 line-clamp-2 leading-snug">{item.name}</h4>
                       </div>
 
                       {/* Detected Specs Badges */}
-                      <div className="pt-2 border-t border-white/5 flex flex-wrap gap-1.5 text-[10px] font-bold">
-                        <span className="bg-white/5 text-gray-300 px-2 py-0.5 rounded-md border border-white/10 uppercase">
+                      <div className="pt-2 border-t border-neutral-200 flex flex-wrap gap-1.5 text-[10px] font-bold">
+                        <span className="bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded-md border border-neutral-250 uppercase">
                           {item.metal}
                         </span>
-                        <span className="bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/20">
+                        <span className="bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded-md border border-neutral-250 uppercase">
                           {item.karat}
                         </span>
                         {item.weight_grams && (
-                          <span className="bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded-md border border-blue-500/20">
+                          <span className="bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded-md border border-neutral-250 uppercase">
                             {item.weight_grams}g
                           </span>
                         )}
-                        <span className="bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded-md border border-purple-500/20">
+                        <span className="bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded-md border border-neutral-250 uppercase">
                           Mc: {item.making_charge_percent}%
                         </span>
                       </div>

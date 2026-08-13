@@ -67,17 +67,17 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       {/* Create Form */}
-      <div className="lg:col-span-1 p-6 rounded-2xl bg-gradient-to-b from-[#161616] to-[#0d0d0d] border border-amber-500/30 shadow-xl space-y-4 self-start">
-        <h2 className="text-lg font-extrabold text-white flex items-center gap-2 pb-3 border-b border-white/10">
-          <Plus className="w-5 h-5 text-amber-400" />
+      <div className="lg:col-span-1 p-6 rounded-2xl bg-white border border-neutral-200 shadow-sm space-y-4 self-start">
+        <h2 className="text-lg font-extrabold text-neutral-900 flex items-center gap-2 pb-3 border-b border-neutral-200">
+          <Plus className="w-5 h-5 text-neutral-900" />
           Broadcast New Announcement
         </h2>
 
         {status && (
           <div className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
             status.type === "success" 
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-              : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
+              : "bg-rose-50 border-rose-200 text-rose-800"
           }`}>
             {status.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
             <span>{status.message}</span>
@@ -86,23 +86,23 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
 
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-300 mb-1">Title</label>
+            <label className="block text-xs font-bold text-neutral-700 mb-1">Title</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Diwali Special Offer: 500 Free Broadcasts!"
-              className="w-full px-3 py-2 bg-black/70 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-amber-400"
+              className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-xs font-semibold focus:outline-none focus:border-black"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-300 mb-1">Type / Category</label>
+            <label className="block text-xs font-bold text-neutral-700 mb-1">Type / Category</label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="w-full px-3 py-2 bg-black/70 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-amber-400"
+              className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-xs font-semibold focus:outline-none focus:border-black cursor-pointer"
             >
               <option value="info">📢 General Announcement (Info)</option>
               <option value="promo">🎁 Special Offer / Promotion</option>
@@ -111,13 +111,13 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-300 mb-1">Content / Message</label>
+            <label className="block text-xs font-bold text-neutral-700 mb-1">Content / Message</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={4}
               placeholder="Write announcement message that will appear on all shop owner dashboards..."
-              className="w-full px-3 py-2 bg-black/70 border border-white/10 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-amber-400"
+              className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-xs font-semibold focus:outline-none focus:border-black resize-none"
               required
             />
           </div>
@@ -125,9 +125,9 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 text-black font-extrabold rounded-xl text-xs shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-black text-white hover:bg-neutral-800 font-extrabold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
-            <Sparkles className="w-4 h-4 fill-black text-black" />
+            <Sparkles className="w-4 h-4 fill-white text-white" />
             <span>{loading ? "Publishing..." : "Publish to All Shop Dashboards"}</span>
           </button>
         </form>
@@ -135,13 +135,13 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
 
       {/* Announcements List */}
       <div className="lg:col-span-2 space-y-4">
-        <h2 className="text-lg font-extrabold text-white flex items-center justify-between pb-2 border-b border-white/10">
+        <h2 className="text-lg font-extrabold text-neutral-900 flex items-center justify-between pb-2 border-b border-neutral-200">
           <span>Active Announcements ({announcements.length})</span>
-          <span className="text-xs text-gray-400 font-normal">Visible on all shop dashboards</span>
+          <span className="text-xs text-neutral-500 font-normal">Visible on all shop dashboards</span>
         </h2>
 
         {announcements.length === 0 ? (
-          <div className="p-8 text-center bg-[#111] border border-white/10 rounded-2xl text-gray-400 text-sm">
+          <div className="p-8 text-center bg-white border border-neutral-200 rounded-2xl text-neutral-500 text-sm shadow-sm">
             No active announcements found. Create your first announcement on the left!
           </div>
         ) : (
@@ -150,37 +150,37 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
               key={a.id}
               className={`p-5 rounded-2xl border transition-all space-y-2 ${
                 a.type === 'promo'
-                  ? 'bg-gradient-to-r from-purple-950/40 via-[#111] to-purple-950/20 border-purple-500/40'
+                  ? 'bg-purple-50/30 border-purple-200'
                   : a.type === 'alert'
-                  ? 'bg-gradient-to-r from-rose-950/40 via-[#111] to-rose-950/20 border-rose-500/40'
-                  : 'bg-gradient-to-r from-amber-950/40 via-[#111] to-amber-950/20 border-amber-500/40'
+                  ? 'bg-rose-50/30 border-rose-200'
+                  : 'bg-neutral-50/50 border-neutral-250'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                     a.type === 'promo'
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                      ? 'bg-purple-50 text-purple-705 border border-purple-200'
                       : a.type === 'alert'
-                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                      : 'bg-neutral-100 text-neutral-800 border border-neutral-250'
                   }`}>
                     {a.type === 'promo' ? '🎁 Offer' : a.type === 'alert' ? '⚠️ Alert' : '📢 Notice'}
                   </span>
-                  <span className="text-xs text-gray-500">{new Date(a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="text-xs text-neutral-500">{new Date(a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
 
                 <button
                   onClick={() => handleDelete(a.id)}
-                  className="p-1.5 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                  className="p-1.5 text-neutral-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-lg transition-colors cursor-pointer"
                   title="Delete Announcement"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
 
-              <h3 className="text-base font-extrabold text-white">{a.title}</h3>
-              <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{a.content}</p>
+              <h3 className="text-base font-extrabold text-neutral-900">{a.title}</h3>
+              <p className="text-xs text-neutral-700 whitespace-pre-wrap leading-relaxed">{a.content}</p>
             </div>
           ))
         )}

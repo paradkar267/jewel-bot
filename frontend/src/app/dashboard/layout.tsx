@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const isSuperAdmin = Boolean((session.user as any).isSuperAdmin) || userEmail === ADMIN_EMAIL;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans selection:bg-amber-500/30 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-neutral-50 text-neutral-800 font-sans selection:bg-black/10 flex flex-col md:flex-row">
       {/* Left Sidebar / Mobile Navigation */}
       <Sidebar 
         shopName={shopName ?? null} 

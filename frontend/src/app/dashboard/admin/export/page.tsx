@@ -21,11 +21,11 @@ export default async function AdminExportPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white flex items-center tracking-tight">
-            <FileSpreadsheet className="h-8 w-8 text-amber-500 mr-3" />
+          <h1 className="text-3xl font-extrabold text-neutral-900 flex items-center tracking-tight">
+            <FileSpreadsheet className="h-8 w-8 text-neutral-850 mr-3" />
             1-Click Master Platform CSV & Excel Exporter
           </h1>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-neutral-505">
             Export comprehensive data reports of registered showrooms, products, customer leads, and broadcast metrics in standard CSV format.
           </p>
         </div>

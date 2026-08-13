@@ -52,17 +52,17 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
   }
 
   const renderNavContent = () => (
-    <div className="flex flex-col justify-between h-full py-4">
+    <div className="flex flex-col justify-between h-full py-4 bg-white">
       <div>
         {/* Brand & Logo */}
-        <div className="h-16 px-6 border-b border-white/10 flex items-center justify-between">
+        <div className="h-16 px-6 border-b border-neutral-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.25)] shrink-0">
-              <Store className="h-5 w-5 text-black fill-black" />
+            <div className="h-9 w-9 bg-black rounded-xl flex items-center justify-center shadow-sm shrink-0">
+              <Store className="h-5 w-5 text-white fill-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-black text-white tracking-wide gold-text-gradient uppercase">JEWELBOT</span>
-              <span className="text-[10px] font-extrabold text-amber-400/80 tracking-widest uppercase">
+              <span className="text-base font-black text-neutral-900 tracking-wide gold-text-gradient uppercase">JEWELBOT</span>
+              <span className="text-[10px] font-extrabold text-neutral-500 tracking-widest uppercase">
                 {isAdminPage ? 'SUPER ADMIN PANEL' : 'AI SHOWROOM PORTAL'}
               </span>
             </div>
@@ -70,7 +70,7 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
           {/* Close button for mobile drawer */}
           <button 
             onClick={() => setIsMobileOpen(false)}
-            className="md:hidden p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
+            className="md:hidden p-2 text-neutral-500 hover:text-black rounded-xl hover:bg-neutral-100 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -78,9 +78,9 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
 
         {/* Shop Active Badge */}
         {shopName && (
-          <div className="px-6 py-3 border-b border-white/5 bg-gradient-to-r from-amber-500/5 via-transparent to-transparent">
-            <div className="flex items-center text-xs font-extrabold text-amber-300 truncate">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0"></span>
+          <div className="px-6 py-3 border-b border-neutral-100 bg-neutral-50">
+            <div className="flex items-center text-xs font-extrabold text-neutral-700 truncate">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shadow-sm shrink-0"></span>
               <span className="truncate">{shopName}</span>
             </div>
           </div>
@@ -99,12 +99,12 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
                 onClick={() => setIsMobileOpen(false)}
                 className={`flex items-center px-4 py-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all duration-200 group ${
                   isActive
-                    ? 'bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent text-amber-300 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
-                    : 'text-gray-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                    ? 'bg-black text-white shadow-md border border-neutral-950'
+                    : 'text-neutral-600 hover:text-black hover:bg-neutral-100 border border-transparent'
                 }`}
               >
                 <Icon className={`h-4 w-4 mr-3 transition-colors shrink-0 ${
-                  isActive ? 'text-amber-400' : 'text-gray-400 group-hover:text-amber-400'
+                  isActive ? 'text-white' : 'text-neutral-500 group-hover:text-black'
                 }`} />
                 <span className="truncate">{item.name}</span>
               </Link>
@@ -114,11 +114,11 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
       </div>
 
       {/* Bottom Profile & Logout */}
-      <div className="p-4 border-t border-white/10 bg-black/40">
+      <div className="p-4 border-t border-neutral-200 bg-neutral-50">
         {userEmail && (
           <div className="px-4 mb-3">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Connected Account</p>
-            <p className="text-xs font-bold text-gray-300 truncate font-mono mt-0.5">{userEmail}</p>
+            <p className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider">Connected Account</p>
+            <p className="text-xs font-bold text-neutral-700 truncate font-mono mt-0.5">{userEmail}</p>
           </div>
         )}
         <LogoutButton />
@@ -129,25 +129,25 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
   return (
     <>
       {/* Mobile Top Header Navigation Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#080808]/90 backdrop-blur-xl border-b border-amber-500/20 z-40 px-4 flex items-center justify-between shadow-lg">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-b border-neutral-200 z-40 px-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileOpen(true)}
-            className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors border border-white/10"
+            className="p-2 text-neutral-600 hover:text-black hover:bg-neutral-100 rounded-xl transition-colors border border-neutral-200"
             aria-label="Open Navigation Menu"
           >
-            <Menu className="h-5 w-5 text-amber-400" />
+            <Menu className="h-5 w-5 text-neutral-800" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 bg-gradient-to-br from-amber-300 to-amber-500 rounded-lg flex items-center justify-center shadow-md">
-              <Store className="h-4 w-4 text-black font-bold fill-black" />
+            <div className="h-7 w-7 bg-black rounded-lg flex items-center justify-center shadow-md">
+              <Store className="h-4 w-4 text-white font-bold fill-white" />
             </div>
-            <span className="text-sm font-black text-white gold-text-gradient uppercase tracking-wider">JEWELBOT</span>
+            <span className="text-sm font-black text-neutral-900 gold-text-gradient uppercase tracking-wider">JEWELBOT</span>
           </div>
         </div>
 
         {shopName && (
-          <span className="text-xs font-extrabold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30 truncate max-w-[140px]">
+          <span className="text-xs font-extrabold text-neutral-800 bg-neutral-100 px-3 py-1 rounded-full border border-neutral-200 truncate max-w-[140px]">
             {shopName}
           </span>
         )}
@@ -157,19 +157,19 @@ export default function Sidebar({ shopName, userEmail, isSuperAdmin }: SidebarPr
       {isMobileOpen && (
         <div 
           onClick={() => setIsMobileOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 transition-opacity duration-300"
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300"
         />
       )}
 
       {/* Mobile Navigation Drawer Container */}
-      <div className={`md:hidden fixed top-0 left-0 bottom-0 w-72 bg-[#0d0d0d] border-r border-amber-500/20 z-50 transition-transform duration-300 ease-in-out shadow-2xl ${
+      <div className={`md:hidden fixed top-0 left-0 bottom-0 w-72 bg-white border-r border-neutral-200 z-50 transition-transform duration-300 ease-in-out shadow-2xl ${
         isMobileOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {renderNavContent()}
       </div>
 
       {/* Desktop Desktop Permanent Left Navigation Sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-[#0c0c0c] border-r border-amber-500/20 z-30 shadow-2xl">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white border-r border-neutral-200 z-30 shadow-sm">
         {renderNavContent()}
       </aside>
     </>

@@ -116,22 +116,22 @@ export default function AddProductPage() {
   return (
     <div className="max-w-5xl mx-auto pb-10 animate-in fade-in duration-500">
       <div className="mb-8 flex items-center">
-        <Link href="/dashboard/catalog" className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors mr-4 border border-white/5">
+        <Link href="/dashboard/catalog" className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-black transition-colors mr-4 border border-neutral-250">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Add Jewelry to Vault</h1>
-          <p className="text-gray-400 mt-1">Upload a photo, select purity karat, and let our AI assist you.</p>
+          <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Add Jewelry to Vault</h1>
+          <p className="text-neutral-500 mt-1">Upload a photo, select purity karat, and let our AI assist you.</p>
         </div>
       </div>
 
-      <div className="bg-[#111111] shadow-2xl rounded-2xl border border-white/5 overflow-hidden">
+      <div className="bg-white shadow-sm rounded-2xl border border-neutral-200 overflow-hidden">
         <div className="p-8 md:flex gap-10">
           
           {/* Image Upload Section */}
           <div className="md:w-5/12 mb-8 md:mb-0">
-            <label className="block text-sm font-medium text-gray-300 mb-2">Jewelry Photo</label>
-            <div className="relative group border-2 border-dashed border-white/10 rounded-2xl p-4 text-center hover:border-amber-500/50 transition-colors bg-[#0a0a0a] min-h-[300px] flex flex-col items-center justify-center overflow-hidden">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Jewelry Photo</label>
+            <div className="relative group border-2 border-dashed border-neutral-200 rounded-2xl p-4 text-center hover:border-neutral-400 transition-colors bg-neutral-50 min-h-[300px] flex flex-col items-center justify-center overflow-hidden">
               
               {preview ? (
                 <div className="relative w-full h-72">
@@ -142,11 +142,11 @@ export default function AddProductPage() {
                 </div>
               ) : (
                 <div className="py-8">
-                  <div className="h-16 w-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/20 text-amber-500">
+                  <div className="h-16 w-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-neutral-200 text-neutral-800">
                     <ImageIcon className="h-8 w-8" />
                   </div>
-                  <p className="text-sm font-bold text-gray-300">Upload high quality image</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                  <p className="text-sm font-bold text-neutral-700">Upload high quality image</p>
+                  <p className="text-xs text-neutral-500 mt-1">PNG, JPG up to 10MB</p>
                 </div>
               )}
 
@@ -164,22 +164,22 @@ export default function AddProductPage() {
                 type="button"
                 onClick={handleAIAutofill}
                 disabled={isAnalyzing}
-                className={`mt-6 w-full flex items-center justify-center py-4 px-4 rounded-xl text-sm font-bold focus:outline-none transition-all duration-300 relative overflow-hidden group ${
+                className={`mt-6 w-full flex items-center justify-center py-4 px-4 rounded-xl text-sm font-bold focus:outline-none transition-all duration-300 relative overflow-hidden group cursor-pointer ${
                   isAnalyzing 
-                    ? 'border-2 border-amber-400 bg-amber-500/20 text-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.4)] scale-[0.98]' 
-                    : 'border border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 shadow-[0_0_20px_rgba(251,191,36,0.1)] hover:shadow-[0_0_25px_rgba(251,191,36,0.2)]'
+                    ? 'border border-black bg-neutral-100 text-black scale-[0.98]' 
+                    : 'border border-neutral-300 text-neutral-805 bg-neutral-50 hover:bg-neutral-100'
                 }`}
               >
-                <div className={`absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-400/20 to-transparent -translate-x-full ${isAnalyzing ? 'animate-[shimmer_1s_infinite]' : 'group-hover:animate-[shimmer_1.5s_infinite]'}`} />
+                <div className={`absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-neutral-400/20 to-transparent -translate-x-full ${isAnalyzing ? 'animate-[shimmer_1s_infinite]' : 'group-hover:animate-[shimmer_1.5s_infinite]'}`} />
                 
                 {isAnalyzing ? (
                   <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin text-amber-500 relative z-10" />
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin text-neutral-800 relative z-10" />
                     <span className="relative z-10">Gemini is analyzing...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-5 w-5 mr-2 relative z-10" />
+                    <Sparkles className="h-5 w-5 mr-2 relative z-10 text-neutral-800" />
                     <span className="relative z-10">Auto-Fill with AI Magic</span>
                   </>
                 )}
@@ -192,11 +192,11 @@ export default function AddProductPage() {
             <form onSubmit={handleSave} className="space-y-5">
               
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Jewelry Name *</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Jewelry Name *</label>
                 <input 
                   type="text" required
                   value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 px-4 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm" 
+                  className="block w-full bg-white border border-neutral-300 rounded-xl py-3 px-4 text-neutral-900 font-bold placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors sm:text-sm" 
                   placeholder="e.g. Royal Kundan Gold Necklace" 
                 />
               </div>
@@ -205,10 +205,10 @@ export default function AddProductPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 
                 <div>
-                  <label className="block text-sm font-bold text-amber-400 mb-1.5">Karat / Purity ✨</label>
+                  <label className="block text-sm font-bold text-neutral-800 mb-1.5">Karat / Purity ✨</label>
                   <select 
                     value={formData.karat} onChange={e => setFormData({...formData, karat: e.target.value})}
-                    className="block w-full bg-[#0a0a0a] border border-amber-500/30 rounded-xl py-3 px-3 text-white font-bold focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm cursor-pointer"
+                    className="block w-full bg-white border border-neutral-300 rounded-xl py-3 px-3 text-neutral-900 font-bold focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors sm:text-sm cursor-pointer"
                   >
                     <option value="22K">22K Gold (916) 👑</option>
                     <option value="18K">18K Gold (750) 💎</option>
@@ -221,10 +221,10 @@ export default function AddProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Category</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">Category</label>
                   <select 
                     value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 px-3 text-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm cursor-pointer"
+                    className="block w-full bg-white border border-neutral-300 rounded-xl py-3 px-3 text-neutral-900 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors sm:text-sm cursor-pointer"
                   >
                     <option value="ring">Ring 💍</option>
                     <option value="necklace">Necklace 📿</option>
@@ -241,16 +241,16 @@ export default function AddProductPage() {
                       type="text" 
                       value={formData.customCategory} onChange={e => setFormData({...formData, customCategory: e.target.value})}
                       placeholder="e.g. Brooch, Waist Belt, Kada"
-                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl py-2 px-3 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                      className="mt-2 block w-full bg-white border border-neutral-300 rounded-xl py-2 px-3 text-neutral-900 font-bold text-xs focus:outline-none focus:border-black"
                     />
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Metal</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">Metal</label>
                   <select 
                     value={formData.metal} onChange={e => setFormData({...formData, metal: e.target.value})}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 px-3 text-white focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm cursor-pointer"
+                    className="block w-full bg-white border border-neutral-300 rounded-xl py-3 px-3 text-neutral-900 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors sm:text-sm cursor-pointer"
                   >
                     <option value="gold">Gold 🥇</option>
                     <option value="silver">Silver 🥈</option>
@@ -266,7 +266,7 @@ export default function AddProductPage() {
                       type="text" 
                       value={formData.customMetal} onChange={e => setFormData({...formData, customMetal: e.target.value})}
                       placeholder="e.g. Panchdhatu, Titanium"
-                      className="mt-2 block w-full bg-[#0a0a0a] border border-amber-500/40 rounded-xl py-2 px-3 text-white font-bold text-xs focus:outline-none focus:border-amber-400"
+                      className="mt-2 block w-full bg-white border border-neutral-300 rounded-xl py-2 px-3 text-neutral-900 font-bold text-xs focus:outline-none focus:border-black"
                     />
                   )}
                 </div>
@@ -276,24 +276,24 @@ export default function AddProductPage() {
               {/* Weight in Grams & Price */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5 flex items-center justify-between">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5 flex items-center justify-between">
                     <span>Weight (Grams)</span>
-                    <Scale className="w-3.5 h-3.5 text-amber-400" />
+                    <Scale className="w-3.5 h-3.5 text-neutral-600" />
                   </label>
                   <input 
                     type="number" step="0.01"
                     value={formData.weight_grams} onChange={e => setFormData({...formData, weight_grams: e.target.value})}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 px-4 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm" 
+                    className="block w-full bg-white border border-neutral-300 rounded-xl py-3 px-4 text-neutral-900 font-bold placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors sm:text-sm" 
                     placeholder="e.g. 8.5" 
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Price (₹)</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">Price (₹)</label>
                   <input 
                     type="number" 
                     value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
-                    className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 px-4 text-amber-400 font-extrabold placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm" 
+                    className="block w-full bg-white border border-neutral-300 rounded-xl py-3 px-4 text-neutral-900 font-extrabold placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors sm:text-sm" 
                     placeholder="Leave empty for 'Ask Price'" 
                   />
                 </div>
@@ -301,11 +301,11 @@ export default function AddProductPage() {
 
               {/* Store Link */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Purchase URL (Optional)</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Purchase URL (Optional)</label>
                 <input 
                   type="url" 
                   value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})}
-                  className="block w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-colors sm:text-sm" 
+                  className="block w-full bg-white border border-neutral-300 rounded-xl py-3 px-4 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors sm:text-sm" 
                   placeholder="https://yourstore.com/item/123" 
                 />
               </div>
@@ -315,11 +315,11 @@ export default function AddProductPage() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full flex items-center justify-center py-4 px-6 rounded-xl text-sm font-extrabold text-[#0a0a0a] bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 hover:from-amber-200 hover:to-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.2)] hover:shadow-[0_0_30px_rgba(251,191,36,0.3)] transition-all transform hover:scale-[1.01]"
+                  className="w-full flex items-center justify-center py-4 px-6 rounded-xl text-sm font-extrabold text-white bg-black hover:bg-neutral-800 transition-all transform hover:scale-[1.01] cursor-pointer shadow-sm"
                 >
                   {isSaving ? (
                     <>
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin text-black" />
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin text-white" />
                       Saving to Vault...
                     </>
                   ) : (
