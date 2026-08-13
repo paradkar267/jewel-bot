@@ -64,3 +64,34 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(0, 0, 0, 0.08);
   color: #000000;
 }
+
+/* Premium Animations */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(2deg); }
+  50% { transform: translateY(-10px) rotate(0.5deg); }
+}
+@keyframes float-badge-left {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-6px) translateX(-3px); }
+}
+@keyframes float-badge-right {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(6px) translateX(3px); }
+}
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+.animate-float-left {
+  animation: float-badge-left 5s ease-in-out infinite;
+}
+.animate-float-right {
+  animation: float-badge-right 5.5s ease-in-out infinite;
+}
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}

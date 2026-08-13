@@ -69,16 +69,16 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[calc(100vh-220px)]">
           
           {/* Left Column: Heading & CTAs */}
-          <div className="lg:col-span-7 text-left z-10">
+          <div className="lg:col-span-7 text-left z-10 space-y-6">
             
             {/* Top Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-neutral-100 border border-neutral-300 text-xs sm:text-sm text-neutral-800 font-medium mb-8 shadow-sm">
-              <Sparkles className="w-4 h-4 text-neutral-900" />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-neutral-250 text-xs sm:text-sm text-neutral-800 font-bold shadow-sm">
+              <Sparkles className="w-4 h-4 text-neutral-900 fill-neutral-900" />
               <span>The Future of Jewelry Retail is Here</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black tracking-tight text-neutral-900 leading-[1.08] mb-6 font-sans">
+            <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black tracking-tight text-neutral-900 leading-[1.08] font-sans">
               Sell Jewelry on <br />
               WhatsApp <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-neutral-950 to-neutral-700 drop-shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
@@ -87,15 +87,15 @@ export default function LandingPage() {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-base sm:text-lg text-neutral-600 max-w-xl mb-10 leading-relaxed font-normal">
-              Upload your catalog. Our AI agent instantly chats with your customers, recommends jewelry, and closes sales directly on <span className="text-emerald-600 font-bold">WhatsApp 24/7</span>.
+            <p className="text-base sm:text-lg text-neutral-605 max-w-xl leading-relaxed font-normal">
+              Upload your catalog. Our AI agent instantly chats with your customers, recommends jewelry, and closes sales directly on <span className="text-emerald-700 font-bold">WhatsApp 24/7</span>.
             </p>
 
             {/* Primary Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center pt-4">
               <Link 
                 href="/login" 
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-extrabold text-white transition-all duration-300 bg-black rounded-xl shadow-lg hover:scale-[1.03] hover:bg-neutral-800"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-extrabold text-white transition-all duration-300 bg-black rounded-xl shadow-lg hover:scale-[1.03] hover:bg-neutral-800 cursor-pointer"
               >
                 <Rocket className="w-5 h-5 fill-white text-white" />
                 <span>Build your Empire now</span>
@@ -103,7 +103,7 @@ export default function LandingPage() {
 
               <Link 
                 href="/login" 
-                className="inline-flex items-center justify-center gap-3 px-7 py-4 text-base font-semibold text-neutral-800 transition-all duration-300 bg-white border border-neutral-300 rounded-xl hover:bg-neutral-100 hover:border-neutral-400 backdrop-blur-xl"
+                className="inline-flex items-center justify-center gap-3 px-7 py-4 text-base font-bold text-neutral-800 transition-all duration-300 bg-white border border-neutral-300 rounded-xl hover:bg-neutral-100 hover:border-neutral-400 backdrop-blur-xl cursor-pointer shadow-sm"
               >
                 <PlayCircle className="w-5 h-5 text-neutral-900" />
                 <span>See How It Works</span>
@@ -113,7 +113,7 @@ export default function LandingPage() {
           </div>
 
           {/* Right Column: Realistic Light Mobile Phone Mockup */}
-          <div className="lg:col-span-5 relative flex justify-center items-center">
+          <div className="lg:col-span-5 relative flex justify-center items-center py-6">
             
             {/* Curved Gray Glowing Light Rings */}
             <svg className="absolute w-[520px] h-[520px] pointer-events-none -z-10 opacity-75" viewBox="0 0 520 520" fill="none">
@@ -127,9 +127,32 @@ export default function LandingPage() {
                 </linearGradient>
               </defs>
             </svg>
+
+            {/* Floating Live Indicator badge (Top Left) */}
+            <div className="absolute -left-4 sm:-left-12 top-20 bg-white/95 backdrop-blur-md border border-neutral-200 rounded-2xl p-3 shadow-lg animate-float-left z-20 flex items-center gap-2.5 max-w-[170px] pointer-events-none">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <div>
+                <p className="text-[8px] font-extrabold text-neutral-450 uppercase tracking-wider">Live Catalog</p>
+                <p className="text-[11px] font-bold text-neutral-900 mt-0.5">Sync Active ⚡</p>
+              </div>
+            </div>
+
+            {/* Floating Live Conversion Badge (Bottom Right) */}
+            <div className="absolute -right-4 sm:-right-8 bottom-24 bg-white/95 backdrop-blur-md border border-neutral-200 rounded-2xl p-3.5 shadow-lg animate-float-right z-20 flex items-center gap-3 pointer-events-none">
+              <div className="h-8 w-8 bg-emerald-50 rounded-lg flex items-center justify-center text-sm border border-emerald-100 shrink-0 shadow-inner">
+                📈
+              </div>
+              <div>
+                <p className="text-[8px] font-extrabold text-neutral-455 uppercase tracking-wider">Conversion</p>
+                <p className="text-[12px] font-black text-emerald-700 mt-0.5">+43.8% Sales</p>
+              </div>
+            </div>
             
             {/* Mobile Phone Device Frame */}
-            <div className="relative w-[320px] sm:w-[345px] rounded-[48px] bg-gradient-to-b from-neutral-200 via-neutral-100 to-neutral-300 p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-[3px] border-neutral-400 backdrop-blur-2xl transform lg:rotate-[2deg] hover:rotate-0 transition-transform duration-500">
+            <div className="relative w-[320px] sm:w-[345px] rounded-[48px] bg-gradient-to-b from-neutral-200 via-neutral-100 to-neutral-300 p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.12)] border-[3px] border-neutral-400 backdrop-blur-2xl animate-float-slow">
               
               {/* Dynamic Island / Top Speaker */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-4 bg-black rounded-full z-30 flex items-center justify-center border border-white/10">
@@ -260,13 +283,29 @@ export default function LandingPage() {
 
         </div>
 
+        {/* ── Trusted Showrooms Auto-Scrolling Marquee ─────── */}
+        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden py-7 border-y border-neutral-200 bg-white/40 backdrop-blur-sm mt-16">
+          <p className="text-[10px] uppercase tracking-widest text-center text-neutral-400 font-extrabold mb-4">TRUSTED BY MODERN JEWELERS & SaaS SHOWROOMS</p>
+          <div className="relative flex w-full overflow-x-hidden">
+            <div className="flex gap-16 whitespace-nowrap animate-marquee">
+              {['Cartier', 'Tiffany & Co.', 'Harry Winston', 'Bulgari', 'Van Cleef & Arpels', 'Mikimoto', 'Chopard', 'Swarovski', 'Tiffany', 'Cartier', 'Winston', 'Bulgari'].map((brand, i) => (
+                <span key={i} className="text-sm font-black tracking-widest text-neutral-350 hover:text-neutral-900 transition-colors uppercase font-mono">{brand}</span>
+              ))}
+              {/* Duplicate for seamless loop */}
+              {['Cartier', 'Tiffany & Co.', 'Harry Winston', 'Bulgari', 'Van Cleef & Arpels', 'Mikimoto', 'Chopard', 'Swarovski', 'Tiffany', 'Cartier', 'Winston', 'Bulgari'].map((brand, i) => (
+                <span key={`dup-${i}`} className="text-sm font-black tracking-widest text-neutral-350 hover:text-neutral-900 transition-colors uppercase font-mono">{brand}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* ── Bottom Feature Bar (4 Columns) ─────── */}
-        <div id="features" className="mt-16 pt-12 pb-8 border-t border-neutral-200">
+        <div id="features" className="mt-16 pt-8 pb-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {/* Feature 1 */}
-            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-neutral-200 hover:border-neutral-400 transition-colors backdrop-blur-md shadow-sm">
-              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-300 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
+            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/50 border border-neutral-200 hover:border-neutral-400 hover:-translate-y-1 transition-all duration-300 backdrop-blur-md shadow-sm">
+              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-250 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
                 <Clock className="w-6 h-6" />
               </div>
               <div>
@@ -278,8 +317,8 @@ export default function LandingPage() {
             </div>
 
             {/* Feature 2 */}
-            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-neutral-200 hover:border-neutral-400 transition-colors backdrop-blur-md shadow-sm">
-              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-300 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
+            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/50 border border-neutral-200 hover:border-neutral-400 hover:-translate-y-1 transition-all duration-300 backdrop-blur-md shadow-sm">
+              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-250 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
                 <Tag className="w-6 h-6" />
               </div>
               <div>
@@ -291,8 +330,8 @@ export default function LandingPage() {
             </div>
 
             {/* Feature 3 */}
-            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-neutral-200 hover:border-neutral-400 transition-colors backdrop-blur-md shadow-sm">
-              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-300 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
+            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/50 border border-neutral-200 hover:border-neutral-400 hover:-translate-y-1 transition-all duration-300 backdrop-blur-md shadow-sm">
+              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-250 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
                 <MessageCircle className="w-6 h-6" />
               </div>
               <div>
@@ -304,8 +343,8 @@ export default function LandingPage() {
             </div>
 
             {/* Feature 4 */}
-            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-neutral-200 hover:border-neutral-400 transition-colors backdrop-blur-md shadow-sm">
-              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-300 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
+            <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/50 border border-neutral-200 hover:border-neutral-400 hover:-translate-y-1 transition-all duration-300 backdrop-blur-md shadow-sm">
+              <div className="h-12 w-12 rounded-xl bg-neutral-100 border border-neutral-250 flex items-center justify-center text-neutral-900 shrink-0 shadow-sm">
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div>
@@ -318,9 +357,7 @@ export default function LandingPage() {
 
           </div>
         </div>
-
       </main>
-
     </div>
   );
 }
