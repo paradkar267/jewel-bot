@@ -33,7 +33,7 @@ export default async function BroadcastsPage() {
   const totalSuccess = campaigns.reduce((acc, c) => acc + c.success_count, 0);
   const averageSuccessRate = totalSent > 0 ? Math.round((totalSuccess / totalSent) * 100) : 0;
 
-  const currentGoldRate = shop?.gold_rate_per_gram ? Number(shop.gold_rate_per_gram) : 13750;
+  const currentGoldRate = shop?.gold_rate_per_gram ? Number(shop.gold_rate_per_gram) : 14750;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-300">

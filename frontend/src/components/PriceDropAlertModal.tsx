@@ -10,7 +10,7 @@ interface PriceDropAlertModalProps {
   currentGoldRate?: number;
 }
 
-export default function PriceDropAlertModal({ isOpen, onClose, currentGoldRate = 13750 }: PriceDropAlertModalProps) {
+export default function PriceDropAlertModal({ isOpen, onClose, currentGoldRate = 14750 }: PriceDropAlertModalProps) {
   const [oldRate, setOldRate] = useState<number>(currentGoldRate + 500);
   const [newRate, setNewRate] = useState<number>(currentGoldRate);
   const [customNote, setCustomNote] = useState<string>('Special Discount: Extra 2% off on Making Charges today only!');

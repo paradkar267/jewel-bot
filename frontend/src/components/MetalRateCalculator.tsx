@@ -29,7 +29,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
   });
 
   const [rates, setRates] = useState({
-    gold_rate: 13750,
+    gold_rate: 14750,
     silver_rate: 240,
     making_charge_percent: 12,
   });
@@ -66,7 +66,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
 
       if (shopRes.success) {
         setRates({
-          gold_rate: shopRes.gold_rate || 13750,
+          gold_rate: shopRes.gold_rate || 14750,
           silver_rate: shopRes.silver_rate || 240,
           making_charge_percent: (shopRes.making_charge_percent && shopRes.making_charge_percent <= 50) ? shopRes.making_charge_percent : 12,
         });
@@ -78,13 +78,13 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
 
   const handleAutoFillLiveRates = () => {
     setRates({
-      gold_rate: liveMarketRates.gold_22k,
+      gold_rate: liveMarketRates.gold_24k,
       silver_rate: liveMarketRates.silver,
       making_charge_percent: rates.making_charge_percent || 12
     });
     setStatus({
       type: "success",
-      message: `Auto-filled today's LIVE API Market Rates (₹${liveMarketRates.gold_22k.toLocaleString('en-IN')}/g for 22K Gold, ₹${liveMarketRates.silver.toLocaleString('en-IN')}/g Silver)! Click '1-Click Recalculate' to update catalog.`
+      message: `Auto-filled today's LIVE API Market Rates (₹${liveMarketRates.gold_24k.toLocaleString('en-IN')}/g for 24K Gold, ₹${liveMarketRates.silver.toLocaleString('en-IN')}/g Silver)! Click '1-Click Recalculate' to update catalog.`
     });
   };
 
@@ -148,7 +148,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
           {/* Live Calculation Badge */}
           <div className="bg-neutral-50 border border-neutral-250 rounded-xl px-3 py-1.5 text-xs text-neutral-800 font-semibold flex items-center gap-2 self-start sm:self-auto">
             <Calculator className="w-4 h-4 text-neutral-700" />
-            <span>10g 22K Gold Preview: <strong className="text-neutral-950 font-extrabold">₹{sample10gPrice.toLocaleString('en-IN')}</strong></span>
+            <span>10g 24K Gold Preview: <strong className="text-neutral-950 font-extrabold">₹{sample10gPrice.toLocaleString('en-IN')}</strong></span>
           </div>
         </div>
 
@@ -190,16 +190,16 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-            <div className="p-2.5 rounded-xl bg-neutral-100/60 border border-neutral-250 text-center relative overflow-hidden group">
-              <div className="text-[10px] text-neutral-600 font-bold uppercase tracking-wider">🥇 24K Pure Gold</div>
-              <div className="font-extrabold text-neutral-900 text-base mt-0.5">
+            <div className="p-2.5 rounded-xl bg-white border border-neutral-405 text-center ring-2 ring-neutral-400/30 shadow-sm relative overflow-hidden group">
+              <div className="text-[10px] text-neutral-900 font-extrabold uppercase tracking-wider">🥇 24K Pure Gold</div>
+              <div className="font-extrabold text-neutral-950 text-base mt-0.5">
                 ₹{liveMarketRates.gold_24k.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-neutral-500">/g</span>
               </div>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-neutral-100 border border-neutral-405 text-center ring-2 ring-neutral-400/30">
-              <div className="text-[10px] text-neutral-900 font-extrabold uppercase tracking-wider">👑 22K Gold (916)</div>
-              <div className="font-extrabold text-neutral-950 text-base mt-0.5">
+            <div className="p-2.5 rounded-xl bg-neutral-100/60 border border-neutral-250 text-center">
+              <div className="text-[10px] text-neutral-600 font-bold uppercase tracking-wider">👑 22K Gold (916)</div>
+              <div className="font-extrabold text-neutral-900 text-base mt-0.5">
                 ₹{liveMarketRates.gold_22k.toLocaleString('en-IN')}<span className="text-[10px] font-normal text-neutral-500">/g</span>
               </div>
             </div>
@@ -234,7 +234,7 @@ export default function MetalRateCalculator({ onRecalculateDone }: MetalRateCalc
           <div>
             <label className="block text-xs font-semibold text-neutral-850 mb-1 flex items-center justify-between">
               <span>🪙 Active Gold Rate (₹ / gram)</span>
-              <span className="text-[10px] text-neutral-500 font-normal">(Live: ₹{liveMarketRates.gold_22k})</span>
+              <span className="text-[10px] text-neutral-500 font-normal">(Live: ₹{liveMarketRates.gold_24k})</span>
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-xs font-bold">₹</span>

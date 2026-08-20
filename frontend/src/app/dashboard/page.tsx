@@ -86,7 +86,7 @@ export default async function DashboardPage() {
   ]);
   const liveRates = liveRatesRes.rates;
   const activeAnnouncements = announcementsRes.announcements || [];
-  const currentGoldRate = shop?.gold_rate_per_gram ? Number(shop.gold_rate_per_gram) : liveRates.gold_22k;
+  const currentGoldRate = shop?.gold_rate_per_gram ? Number(shop.gold_rate_per_gram) : liveRates.gold_24k;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
 
         <div className="flex items-center gap-3 self-end md:self-center">
           <div className="text-right hidden sm:block">
-            <span className="text-[10px] text-neutral-450 font-semibold block">Store Active Rate</span>
+            <span className="text-[10px] text-neutral-450 font-semibold block">Store Active 24K Rate</span>
             <span className="text-xs font-extrabold text-neutral-900">₹{currentGoldRate.toLocaleString('en-IN')}/g</span>
           </div>
           <Link
