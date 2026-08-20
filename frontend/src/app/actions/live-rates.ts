@@ -4,22 +4,22 @@ export async function fetchLiveIndiaMetalRates() {
   try {
     // Fetch live Gold (XAU) spot price in USD
     const goldRes = await fetch("https://api.gold-api.com/price/XAU", {
-      next: { revalidate: 60 } // Cache for 60 seconds
+      cache: "no-store"
     });
     const goldData = await goldRes.json();
 
     // Fetch live Silver (XAG) spot price in USD
     const silverRes = await fetch("https://api.gold-api.com/price/XAG", {
-      next: { revalidate: 60 }
+      cache: "no-store"
     });
     const silverData = await silverRes.json();
 
     // Fetch live USD to INR Exchange Rate
     const inrRes = await fetch("https://open.er-api.com/v6/latest/USD", {
-      next: { revalidate: 300 } // Cache exchange rate for 5 mins
+      cache: "no-store"
     });
     const inrData = await inrRes.json();
-    const usdToInr = inrData?.rates?.INR || 86.5;
+    const usdToInr = inrData?.rates?.INR || 95.75;
 
     // 1 Troy Ounce = 31.1034768 grams
     const TROY_OUNCE_GRAMS = 31.1034768;
@@ -59,14 +59,14 @@ export async function fetchLiveIndiaMetalRates() {
     return {
       success: true,
       rates: {
-        gold_24k: 14750,
-        gold_22k: 13750,
-        gold_18k: 11250,
+        gold_24k: 15927,
+        gold_22k: 14600,
+        gold_18k: 11946,
         silver: 240,
         platinum: 4500,
       },
-      usdToInr: 86.5,
-      spotGoldUSD: 2650,
+      usdToInr: 95.75,
+      spotGoldUSD: 4485,
       lastUpdatedTime: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
       isFallback: true,
       source: "Standard Market Benchmark Rates"
