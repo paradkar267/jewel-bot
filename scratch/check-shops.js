@@ -1,11 +1,20 @@
-const { Client } = require('pg');
-const client = new Client({
-  connectionString: "postgresql://neondb_owner:npg_AKDmo8YvxIC9@ep-flat-flower-ayuzyru2-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
-});
+const dotenv = require('dotenv');
+dotenv.config();
+
+const { Pool } = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { PrismaClient } = require('@prisma/client');
+
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
 async function main() {
-  await client.connect();
-  const res = await client.query('SELECT id, name, gold_rate_per_gram, silver_rate_per_gram FROM "shops"');
-  console.log(JSON.stringify(res.rows, null, 2));
-  await client.end();
+  const shop = await prisma.shop.findFirst();
+  console.log("Active shop in DB:", shop?.name, shop?.id);
+  await prisma.$disconnect();
+  await pool.end();
 }
+
 main().catch(console.error);

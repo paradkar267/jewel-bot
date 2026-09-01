@@ -2,15 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Sparkles, Loader2, ArrowLeft, Image as ImageIcon, Scale } from 'lucide-react';
+import { Upload, Sparkles, Loader2, ArrowLeft, Image as ImageIcon, Scale, CheckCircle, Zap } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
+import { compressImage, CompressionResult } from '@/lib/imageCompression';
 
 export default function AddProductPage() {
   const router = useRouter();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
+  const [compressionStats, setCompressionStats] = useState<CompressionResult | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
   
+  const [entryMode, setEntryMode] = useState<'manual' | 'ai'>('manual');
+  const [aiNotice, setAiNotice] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -27,38 +32,54 @@ export default function AddProductPage() {
     url: ''
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setImageFile(file);
-      setPreview(URL.createObjectURL(file));
+      setIsCompressing(true);
+      setAiNotice('');
+
+      try {
+        // Auto-compress photo to 1080px (reduces 10MB phone photo to ~180KB)
+        const result = await compressImage(file, 1080, 0.82);
+        setImageFile(result.compressedFile);
+        setPreview(result.compressedBase64);
+        setCompressionStats(result);
+      } catch (err) {
+        // Fallback to uncompressed if canvas error
+        setImageFile(file);
+        setPreview(URL.createObjectURL(file));
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
   const handleAIAutofill = async () => {
-    if (!imageFile) return;
+    if (!preview) return;
     setIsAnalyzing(true);
+    setAiNotice('');
 
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(imageFile);
-      reader.onloadend = async () => {
-        const base64String = (reader.result as string).split(',')[1];
-        
-        const response = await axios.post('/api/analyze', {
-          base64Image: base64String,
-          mimeType: imageFile.type
-        });
+      // Send lightweight compressed base64 (only ~180KB, zero server strain)
+      const base64String = preview.startsWith('data:') ? preview.split(',')[1] : preview;
+      
+      const response = await axios.post('/api/analyze', {
+        base64Image: base64String,
+        mimeType: imageFile?.type || 'image/jpeg'
+      });
 
-        const data = response.data;
-        setFormData(prev => ({
-          ...prev,
-          name: data.name || '',
-          type: data.type || 'ring',
-          metal: data.metal || 'gold',
-          price: data.price || ''
-        }));
-      };
+      const data = response.data;
+      setFormData(prev => ({
+        ...prev,
+        name: data.name || prev.name,
+        type: data.type || prev.type,
+        metal: data.metal || prev.metal,
+        karat: data.karat || prev.karat,
+        weight_grams: data.weight_grams ? String(data.weight_grams) : prev.weight_grams,
+        price: data.price ? String(data.price) : prev.price
+      }));
+
+      setAiNotice(`✨ AI detected: "${data.name || 'Jewelry piece'}" (${data.karat || '22K'} ${data.metal || 'Gold'} ${data.type || 'piece'}). Review or adjust details below.`);
     } catch (error) {
       alert("AI analysis failed. Please fill details manually.");
     } finally {
@@ -71,16 +92,8 @@ export default function AddProductPage() {
     setIsSaving(true);
 
     try {
-      let imageBase64 = null;
-      if (imageFile) {
-        // Convert file to base64 Data URI
-        const reader = new FileReader();
-        imageBase64 = await new Promise<string>((resolve, reject) => {
-          reader.readAsDataURL(imageFile);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
-        });
-      }
+      // Use compressed image base64 directly to protect database from bloating
+      let imageBase64 = preview || null;
 
       const { createProduct } = await import('@/app/actions/product');
       
@@ -125,6 +138,54 @@ export default function AddProductPage() {
         </div>
       </div>
 
+      {/* Mode Selector Card */}
+      <div className="mb-6 bg-white shadow-sm rounded-2xl border border-neutral-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-neutral-500">Mode Selection</span>
+            {entryMode === 'manual' ? (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                🟢 0 Gemini Tokens (Free)
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                ⚡ ~400 Tokens per scan
+              </span>
+            )}
+          </div>
+          <p className="text-sm font-bold text-neutral-800 mt-1">
+            {entryMode === 'manual' 
+              ? '✍️ Manual Entry Mode: Type specifications yourself. Zero API calls, 100% token savings.' 
+              : '✨ AI Auto-Detect Mode: Gemini Vision analyzes your photo and fills Karat, Metal, Category & Name.'}
+          </p>
+        </div>
+
+        <div className="flex bg-neutral-100 p-1.5 rounded-xl border border-neutral-250 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => { setEntryMode('manual'); setAiNotice(''); }}
+            className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              entryMode === 'manual'
+                ? 'bg-white text-black shadow-sm border border-neutral-200'
+                : 'text-neutral-600 hover:text-black'
+            }`}
+          >
+            ✍️ Manual (Save Tokens)
+          </button>
+          <button
+            type="button"
+            onClick={() => setEntryMode('ai')}
+            className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              entryMode === 'ai'
+                ? 'bg-black text-white shadow-sm'
+                : 'text-neutral-600 hover:text-black'
+            }`}
+          >
+            ✨ AI Auto-Fill (Gemini)
+          </button>
+        </div>
+      </div>
+
       <div className="bg-white shadow-sm rounded-2xl border border-neutral-200 overflow-hidden">
         <div className="p-8 md:flex gap-10">
           
@@ -158,32 +219,78 @@ export default function AddProductPage() {
               />
             </div>
 
-            {/* AI Auto-Fill Button */}
-            {preview && (
-              <button
-                type="button"
-                onClick={handleAIAutofill}
-                disabled={isAnalyzing}
-                className={`mt-6 w-full flex items-center justify-center py-4 px-4 rounded-xl text-sm font-bold focus:outline-none transition-all duration-300 relative overflow-hidden group cursor-pointer ${
-                  isAnalyzing 
-                    ? 'border border-black bg-neutral-100 text-black scale-[0.98]' 
-                    : 'border border-neutral-300 text-neutral-805 bg-neutral-50 hover:bg-neutral-100'
-                }`}
-              >
-                <div className={`absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-neutral-400/20 to-transparent -translate-x-full ${isAnalyzing ? 'animate-[shimmer_1s_infinite]' : 'group-hover:animate-[shimmer_1.5s_infinite]'}`} />
-                
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin text-neutral-800 relative z-10" />
-                    <span className="relative z-10">Gemini is analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-5 w-5 mr-2 relative z-10 text-neutral-800" />
-                    <span className="relative z-10">Auto-Fill with AI Magic</span>
-                  </>
-                )}
-              </button>
+            {/* Auto-Compression Savings Indicator */}
+            {compressionStats && (
+              <div className="mt-2.5 flex items-center justify-between text-[11px] font-bold text-emerald-900 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 animate-in fade-in duration-300">
+                <span className="flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Auto-Compressed (1080px)</span>
+                </span>
+                <span>
+                  {compressionStats.originalSizeKB} KB ➔ {compressionStats.compressedSizeKB} KB ({compressionStats.reductionPercent}% saved)
+                </span>
+              </div>
+            )}
+            {isCompressing && (
+              <div className="mt-2 flex items-center justify-center gap-2 text-xs font-semibold text-neutral-600">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Compressing photo to 1080px...</span>
+              </div>
+            )}
+
+            {/* AI Auto-Fill Button (Only in AI Mode or when opted in) */}
+            {entryMode === 'ai' ? (
+              preview ? (
+                <div className="mt-5 space-y-3">
+                  <button
+                    type="button"
+                    onClick={handleAIAutofill}
+                    disabled={isAnalyzing}
+                    className={`w-full flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-bold focus:outline-none transition-all duration-300 relative overflow-hidden group cursor-pointer ${
+                      isAnalyzing 
+                        ? 'border border-black bg-neutral-100 text-black scale-[0.98]' 
+                        : 'border border-purple-300 text-purple-900 bg-purple-50 hover:bg-purple-100 shadow-sm'
+                    }`}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin text-purple-700 relative z-10" />
+                        <span className="relative z-10">Gemini Vision is scanning photo...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5 mr-2 relative z-10 text-purple-600" />
+                        <span className="relative z-10">Scan & Auto-Fill with Gemini (~400 Tokens)</span>
+                      </>
+                    )}
+                  </button>
+
+                  {aiNotice && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-900 flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                      <span>{aiNotice}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-neutral-500 text-center">
+                  💡 Select an image above to unlock AI Auto-Fill.
+                </p>
+              )
+            ) : (
+              <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span><strong>Manual Mode Active:</strong> 0 tokens will be used.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEntryMode('ai')}
+                  className="text-[11px] font-bold text-purple-700 underline hover:text-purple-900 cursor-pointer"
+                >
+                  Switch to AI
+                </button>
+              </div>
             )}
           </div>
 

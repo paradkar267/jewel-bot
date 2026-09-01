@@ -13,7 +13,23 @@ export default function BulkUploadPage() {
   const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
 
   const handleDownloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Name,Type,Metal,PriceINR,PurchaseURL,ImageURL\nGold Bangle,bracelet,gold,50000,https://yourshop.com/gold-bangle,\nSilver Anklet,other,silver,2000,https://yourshop.com/silver-anklet,";
+    const headers = [
+      "Name",
+      "Type",
+      "Metal",
+      "Karat",
+      "WeightGrams",
+      "MakingChargePercent",
+      "PriceINR",
+      "PurchaseURL",
+      "ImageURL"
+    ];
+    const sampleRows = [
+      '"Buy Bea Diamond Ring Online - Kisna",ring,gold,18K,4.5,12,154000,https://www.kisna.com/products/bea-ring,https://images.unsplash.com/photo-1605100804763-247f67b3557e',
+      '"Royal Kundan Gold Necklace",necklace,gold,22K,32.5,14,245000,https://yourshop.com/kundan-necklace,https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f',
+      '"Silver Floral Anklet Pair",anklet,silver,925 Silver,22.0,8,4200,https://yourshop.com/silver-anklet,https://images.unsplash.com/photo-1535632066927-ab7c9ab60908'
+    ];
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + sampleRows.join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -91,8 +107,15 @@ export default function BulkUploadPage() {
               Download the Template
             </h3>
             <p className="text-neutral-500 mt-2 text-sm max-w-md">
-              To ensure data imports correctly, please download our official CSV template and fill your catalog details in it.
+              Download our official CSV template with all 9 jewelry catalog columns ready to fill.
             </p>
+            <div className="mt-3 flex flex-wrap gap-1.5 max-w-xl">
+              {['Name', 'Category (Type)', 'Metal', 'Karat (Purity)', 'Weight (Grams)', 'Making Charge (%)', 'Price (₹)', 'Product Link', 'Photo URL'].map((col) => (
+                <span key={col} className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200">
+                  ✓ {col}
+                </span>
+              ))}
+            </div>
           </div>
           <button 
             onClick={handleDownloadTemplate}

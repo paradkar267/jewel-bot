@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { revalidatePath } from 'next/cache';
+import { uploadImageToCloudinary } from '@/lib/cloudinary';
 
 export async function createProduct(data: {
   name: string;
@@ -24,6 +25,16 @@ export async function createProduct(data: {
 
   const shopId = (session.user as any).id;
 
+  // Upload to Cloudinary under shop-specific isolated folder
+  let finalImageUrl: string | null = data.image_base64;
+  if (data.image_base64) {
+    try {
+      finalImageUrl = await uploadImageToCloudinary(data.image_base64, shopId);
+    } catch (uploadErr) {
+      console.error("Cloudinary upload failed, falling back to base64:", uploadErr);
+    }
+  }
+
   const product = await prisma.product.create({
     data: {
       shop_id: shopId,
@@ -35,7 +46,7 @@ export async function createProduct(data: {
       weight_grams: data.weight_grams ?? null,
       making_charge_percent: data.making_charge_percent ?? null,
       url: data.url,
-      image_url: data.image_base64,
+      image_url: finalImageUrl,
     },
   });
 
@@ -72,10 +83,20 @@ export async function updateProduct(
 
   const shopId = (session.user as any).id;
 
-  await prisma.product.updateMany({
-    where: {
+  // Upload to Cloudinary if new image data is base64
+  let finalImageUrl: string | null | undefined = data.image_url;
+  if (data.image_url && data.image_url.startsWith('data:')) {
+    try {
+      finalImageUrl = await uploadImageToCloudinary(data.image_url, shopId);
+    } catch (uploadErr) {
+      console.error("Cloudinary upload failed in update, keeping existing:", uploadErr);
+    }
+  }
+
+  await prisma.product.update({
+    where: { 
       id: productId,
-      shop_id: shopId,
+      shop_id: shopId // Ensure shop isolation
     },
     data: {
       name: data.name,
@@ -86,7 +107,7 @@ export async function updateProduct(
       weight_grams: data.weight_grams ?? null,
       making_charge_percent: data.making_charge_percent ?? null,
       url: data.url,
-      image_url: data.image_url,
+      image_url: finalImageUrl,
     },
   });
 

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from 'react';
+import axios from 'axios';
 import { Edit3, Trash2, Layers, Tag, X, Upload, Loader2, AlertCircle, ExternalLink, Package, Scale, Sparkles, CheckSquare, Square, CheckCircle2 } from 'lucide-react';
 import { updateProduct, deleteProduct, deleteMultipleProducts } from '@/app/actions/product';
+import { compressImage } from '@/lib/imageCompression';
 
 interface Product {
   id: string;
@@ -40,6 +42,8 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     image_url: '' as string | null
   });
   const [error, setError] = useState('');
+  const [isAiScanning, setIsAiScanning] = useState(false);
+  const [aiScanMessage, setAiScanMessage] = useState('');
 
   const standardTypes = ['ring', 'necklace', 'earring', 'bracelet', 'pendant', 'anklet', 'bangle'];
   const standardMetals = ['gold', 'silver', 'platinum', 'rose gold', 'white gold', 'copper', 'brass'];
@@ -111,20 +115,57 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     setError('');
   };
 
-  // Convert File to Base64
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Auto-Compress and Convert File to Lightweight Base64
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setError('Image file size must be less than 2MB');
-        return;
+      setError('');
+      try {
+        const result = await compressImage(file, 1080, 0.82);
+        setEditForm(prev => ({ ...prev, image_url: result.compressedBase64 }));
+        setAiScanMessage(`📸 Image optimized: ${result.originalSizeKB} KB ➔ ${result.compressedSizeKB} KB (${result.reductionPercent}% lighter)`);
+      } catch (err: any) {
+        // Fallback
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setEditForm(prev => ({ ...prev, image_url: reader.result as string }));
+          setAiScanMessage('');
+        };
+        reader.readAsDataURL(file);
       }
+    }
+  };
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditForm(prev => ({ ...prev, image_url: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+  // Handle AI Auto-Fill in Edit modal (Optional - uses tokens only when explicitly clicked)
+  const handleAiScanInEdit = async () => {
+    if (!editForm.image_url) return;
+    setIsAiScanning(true);
+    setError('');
+    setAiScanMessage('');
+    try {
+      let base64 = editForm.image_url;
+      let mimeType = 'image/jpeg';
+      if (base64.startsWith('data:')) {
+        const parts = base64.split(',');
+        mimeType = parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+        base64 = parts[1];
+      }
+      const res = await axios.post('/api/analyze', { base64Image: base64, mimeType });
+      const d = res.data;
+      setEditForm(prev => ({
+        ...prev,
+        name: d.name || prev.name,
+        type: d.type && standardTypes.includes(d.type.toLowerCase()) ? d.type.toLowerCase() : prev.type,
+        metal: d.metal && standardMetals.includes(d.metal.toLowerCase()) ? d.metal.toLowerCase() : prev.metal,
+        karat: d.karat || prev.karat,
+        price: d.price ? String(d.price) : prev.price,
+        weight_grams: d.weight_grams ? String(d.weight_grams) : prev.weight_grams
+      }));
+      setAiScanMessage(`✨ AI suggested: "${d.name || 'Jewelry piece'}" (${d.karat || '22K'} ${d.metal || 'Gold'})`);
+    } catch (e: any) {
+      setError("AI analysis failed: " + e.message);
+    } finally {
+      setIsAiScanning(false);
     }
   };
 
@@ -603,6 +644,36 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     />
                   </label>
                 </div>
+
+                {/* Optional AI Auto-Fill in Edit Modal */}
+                {editForm.image_url && editForm.image_url.startsWith('data:') && (
+                  <div className="mt-2.5 flex items-center justify-between bg-purple-50 border border-purple-200 p-2.5 rounded-xl">
+                    <div className="text-[11px] text-purple-900">
+                      <span className="font-bold">✨ Optional AI Assistance:</span> Auto-fill fields from photo (~400 tokens)
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAiScanInEdit}
+                      disabled={isAiScanning}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-purple-600 text-white hover:bg-purple-700 transition-colors cursor-pointer flex-shrink-0"
+                    >
+                      {isAiScanning ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Scanning...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Auto-Fill with AI</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+                {aiScanMessage && (
+                  <p className="mt-1.5 text-xs text-emerald-700 font-semibold">{aiScanMessage}</p>
+                )}
               </div>
 
               {/* Form Buttons */}
