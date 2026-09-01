@@ -292,7 +292,7 @@ If the user message is general chatter or not looking for jewelry products, set 
 }
 
 // ── Step 3: Format WhatsApp reply ───────
-function formatWhatsAppReply(analysis, matchingData) {
+function formatWhatsAppReply(analysis, matchingData, promoBanner) {
   const { exactMatch, suggestions } = matchingData;
 
   if (!analysis.is_jewelry) {
@@ -331,6 +331,10 @@ function formatWhatsAppReply(analysis, matchingData) {
       reply += `${idx + 1}. *${item.name}* — ${pStr}\n`;
       if (item.url) reply += `   🔗 ${item.url}\n`;
     });
+  }
+
+  if (promoBanner) {
+    reply += `\n🎁 *Special Offer:* ${promoBanner}\n`;
   }
 
   return reply;
@@ -409,22 +413,20 @@ app.post('/webhook', async (req, res) => {
 
     const session = getSession(phone);
 
-    // Assign shop to session if missing
-    if (!session.shopId) {
-      const shop = await getShopByPhoneNumber(receivingNumber, metaPhoneNumberId);
-      if (shop) {
-        session.shopId = shop.id;
-        session.shopName = shop.name;
-        session.metaPhoneNumberId = shop.meta_phone_number_id;
-        session.metaAccessToken = shop.meta_access_token;
-        session.customGreeting = shop.custom_greeting;
-        session.storeAddress = shop.store_address;
-        session.promoBanner = shop.promo_banner;
-        session.isActive = shop.is_active !== false;
-        console.log(`   🛒 Assigned to shop: ${shop.name} (Active: ${session.isActive})`);
-      } else {
-        console.log(`   ❌ FAILED to assign shop! session.shopId is NULL`);
-      }
+    // Always fetch latest shop config from DB so dashboard changes apply immediately!
+    const shop = await getShopByPhoneNumber(receivingNumber, metaPhoneNumberId);
+    if (shop) {
+      session.shopId = shop.id;
+      session.shopName = shop.name;
+      session.metaPhoneNumberId = shop.meta_phone_number_id;
+      session.metaAccessToken = shop.meta_access_token;
+      session.customGreeting = shop.custom_greeting;
+      session.storeAddress = shop.store_address;
+      session.promoBanner = shop.promo_banner;
+      session.isActive = shop.is_active !== false;
+      console.log(`   🛒 Shop matched: ${shop.name} | Banner: "${shop.promo_banner || 'none'}"`);
+    } else {
+      console.log(`   ❌ FAILED to assign shop! Meta ID: ${metaPhoneNumberId}`);
     }
 
     // Block processing if shop account is SUSPENDED
@@ -545,7 +547,7 @@ app.post('/webhook', async (req, res) => {
         // Increment count ONLY AFTER successful analysis
         session.dailyImageCount++;
 
-        const replyMessage = formatWhatsAppReply(analysis, matchingData);
+        const replyMessage = formatWhatsAppReply(analysis, matchingData, session.promoBanner);
         await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId, session.metaAccessToken);
         console.log(`   ✅ Analysis reply sent to ${phone} (Updated Count: ${session.dailyImageCount}/${MAX_DAILY_IMAGES})`);
       } catch (err) {
@@ -589,7 +591,10 @@ app.post('/webhook', async (req, res) => {
               if (item.url) reply += `   🔗 Link: ${item.url}\n`;
               reply += `\n`;
             });
-            reply += `✨ _Showroom Catalog items matched for your query._`;
+            reply += `✨ _Showroom Catalog items matched for your query._\n`;
+            if (session.promoBanner) {
+              reply += `\n🎁 *Special Offer:* ${session.promoBanner}\n`;
+            }
             await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
             return;
           }
@@ -598,16 +603,21 @@ app.post('/webhook', async (req, res) => {
         console.error("   ⚠️ Text catalog search error:", err.message);
       }
 
-      // Default Friendly Greeting / Store Reply
-      let greeting = session.customGreeting || `Welcome to *${session.shopName || 'our Jewelry Store'}*! 💎`;
-      let reply = `👋 Hello! ${greeting}\n\n`;
-      reply += `📸 *Send any Jewelry Image or Instagram Screenshot* to search our live catalog!\n\n`;
-      reply += `💬 Or type what you are looking for (e.g. *"Show me gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
+      // Dynamic Friendly Greeting / Store Reply
+      let reply = '';
+      if (session.customGreeting && session.customGreeting.trim() !== '') {
+        reply = `${session.customGreeting.trim()}\n\n`;
+      } else {
+        reply = `👋 Hello! Welcome to *${session.shopName || 'our Jewelry Store'}*! 💎\n\n`;
+        reply += `📸 *Send any Jewelry Image or Instagram Screenshot* to search our live catalog!\n\n`;
+        reply += `💬 Or type what you are looking for (e.g. *"Show me gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
+      }
+
       if (session.storeAddress) {
-        reply += `📍 *Showroom Address:* ${session.storeAddress}\n`;
+        reply += `📍 *Showroom Address:*\n${session.storeAddress}\n\n`;
       }
       if (session.promoBanner) {
-        reply += `🎁 *Special Offer:* ${session.promoBanner}\n`;
+        reply += `🎁 *Special Offer:*\n${session.promoBanner}\n`;
       }
 
       await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
