@@ -3,6 +3,28 @@
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { uploadImageToCloudinary } from '@/lib/cloudinary';
+
+/**
+ * Uploads a broadcast campaign image to Cloudinary CDN under the shop's isolated folder.
+ * Returns a permanent HTTPS link for WhatsApp Cloud API.
+ */
+export async function uploadBroadcastImage(base64Data: string): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user || !(session.user as any).id) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const shopId = (session.user as any).id;
+    const url = await uploadImageToCloudinary(base64Data, shopId);
+    return { success: true, url };
+  } catch (error: any) {
+    console.error("Error in uploadBroadcastImage:", error);
+    return { success: false, error: error.message || "Failed to upload image" };
+  }
+}
 
 export async function uploadMetaMedia(formData: FormData): Promise<{ success: boolean; mediaId?: string; error?: string }> {
   try {
@@ -27,7 +49,7 @@ export async function uploadMetaMedia(formData: FormData): Promise<{ success: bo
     const accessToken = shop.meta_access_token || process.env.META_ACCESS_TOKEN;
 
     if (!senderId || !accessToken) {
-      return { success: false, error: "Meta API configuration is missing. Set META_PHONE_NUMBER_ID and META_ACCESS_TOKEN in Vercel environment variables." };
+      return { success: false, error: "Meta API configuration is missing. Set META_PHONE_NUMBER_ID and META_ACCESS_TOKEN in settings or environment." };
     }
 
     const file = formData.get('file') as File;
@@ -69,10 +91,10 @@ export async function sendBroadcast(messageText: string, limit?: number, imageUr
 
     const shopId = (session.user as any).id;
 
-    // 1. Fetch shop Meta configuration
+    // 1. Fetch shop Meta configuration (phone number ID + access token)
     const shop = await prisma.shop.findUnique({
       where: { id: shopId },
-      select: { meta_phone_number_id: true }
+      select: { meta_phone_number_id: true, meta_access_token: true }
     });
 
     if (!shop) {
@@ -80,10 +102,10 @@ export async function sendBroadcast(messageText: string, limit?: number, imageUr
     }
 
     const senderId = shop.meta_phone_number_id || process.env.META_PHONE_NUMBER_ID;
-    const accessToken = process.env.META_ACCESS_TOKEN;
+    const accessToken = shop.meta_access_token || process.env.META_ACCESS_TOKEN;
 
     if (!senderId || !accessToken) {
-      return { success: false, total: 0, successCount: 0, failCount: 0, errors: ["Meta API configuration is missing. Set META_PHONE_NUMBER_ID and META_ACCESS_TOKEN in Vercel environment variables."] };
+      return { success: false, total: 0, successCount: 0, failCount: 0, errors: ["Meta API configuration is missing. Set META_PHONE_NUMBER_ID and META_ACCESS_TOKEN in your store settings or environment variables."] };
     }
 
     // 2. Fetch all active customers for this shop

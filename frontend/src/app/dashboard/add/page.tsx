@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Sparkles, Loader2, ArrowLeft, Image as ImageIcon, Scale, CheckCircle, Zap } from 'lucide-react';
+import { Upload, Sparkles, Loader2, ArrowLeft, Image as ImageIcon, Scale, CheckCircle, Zap, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
 import { compressImage, CompressionResult } from '@/lib/imageCompression';

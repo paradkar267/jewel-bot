@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Send, Loader2, CheckCircle, AlertCircle, Megaphone, X, Upload } from 'lucide-react';
-import { sendBroadcast, uploadMetaMedia } from '@/app/actions/sendBroadcast';
+import { sendBroadcast, uploadBroadcastImage } from '@/app/actions/sendBroadcast';
+import { compressImage } from '@/lib/imageCompression';
 
 export default function BroadcastModal({ customerCount }: { customerCount: number }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,6 +12,7 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
   const [useUrl, setUseUrl] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [compressedBase64, setCompressedBase64] = useState<string | null>(null);
   const [limit, setLimit] = useState(0); // 0 = All
   const [isSending, setIsSending] = useState(false);
   const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
@@ -23,26 +25,33 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
     setStatus({ type: 'idle', message: 'Initiating broadcast...' });
 
     try {
-      let mediaId: string | undefined;
+      let finalImageUrl = useUrl ? imageUrl?.trim() || undefined : undefined;
 
-      // If user uploaded a file, upload to Meta servers first
-      if (!useUrl && file) {
-        setStatus({ type: 'idle', message: 'Uploading image to WhatsApp...' });
-        const formData = new FormData();
-        formData.append('file', file);
-        const uploadRes = await uploadMetaMedia(formData);
-        if (!uploadRes.success) {
-          throw new Error(uploadRes.error || 'Failed to upload image to WhatsApp');
+      // If user uploaded an image file, compress and upload to Cloudinary CDN
+      if (!useUrl && (compressedBase64 || file)) {
+        setStatus({ type: 'idle', message: 'Uploading image to CDN...' });
+        let base64ToUpload = compressedBase64;
+        if (!base64ToUpload && file) {
+          const comp = await compressImage(file, 1080, 0.82);
+          base64ToUpload = comp.compressedBase64;
         }
-        mediaId = uploadRes.mediaId;
+
+        if (base64ToUpload) {
+          const uploadRes = await uploadBroadcastImage(base64ToUpload);
+          if (!uploadRes.success || !uploadRes.url) {
+            setStatus({ type: 'error', message: uploadRes.error || 'Failed to upload image' });
+            setIsSending(false);
+            return;
+          }
+          finalImageUrl = uploadRes.url;
+        }
       }
 
-      setStatus({ type: 'idle', message: 'Initiating broadcast queue...' });
+      setStatus({ type: 'idle', message: 'Sending WhatsApp broadcast...' });
       const result = await sendBroadcast(
         message, 
         limit === 0 ? undefined : limit, 
-        useUrl ? imageUrl || undefined : undefined, 
-        mediaId
+        finalImageUrl
       );
       
       if (result.success && result.successCount !== undefined && result.successCount > 0) {
@@ -54,13 +63,17 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
         setImageUrl('');
         setFile(null);
         setPreviewUrl(null);
+        setCompressedBase64(null);
         setTimeout(() => {
           setIsOpen(false);
           setStatus({ type: 'idle', message: '' });
           setLimit(0);
         }, 3000);
       } else {
-        throw new Error(result.errors?.[0] || 'Meta API rejected the broadcast.');
+        setStatus({ 
+          type: 'error', 
+          message: result.errors?.[0] || 'WhatsApp rejected the broadcast. Please check your Meta configuration.' 
+        });
       }
     } catch (err: any) {
       setStatus({ 
@@ -156,11 +169,17 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const f = e.target.files?.[0];
                           if (f) {
                             setFile(f);
-                            setPreviewUrl(URL.createObjectURL(f));
+                            try {
+                              const comp = await compressImage(f, 1080, 0.82);
+                              setCompressedBase64(comp.compressedBase64);
+                              setPreviewUrl(comp.compressedBase64);
+                            } catch {
+                              setPreviewUrl(URL.createObjectURL(f));
+                            }
                           }
                         }}
                         className="absolute inset-0 opacity-0 cursor-pointer"
@@ -175,6 +194,7 @@ export default function BroadcastModal({ customerCount }: { customerCount: numbe
                               e.stopPropagation();
                               setFile(null);
                               setPreviewUrl(null);
+                              setCompressedBase64(null);
                             }}
                             className="absolute top-0 right-1/4 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 transition-colors cursor-pointer"
                           >
