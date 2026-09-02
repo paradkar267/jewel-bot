@@ -627,19 +627,29 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// ── Health Check Route ───────
+app.get('/', (req, res) => {
+  res.status(200).send('🚀 JewelBot WhatsApp AI Webhook Server is running live!');
+});
+
 // ── Webhook Verification (GET request for Meta verification) ───────
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'jewelbot_secure_token_2026';
+  const validTokens = [
+    process.env.VERIFY_TOKEN,
+    process.env.WEBHOOK_VERIFY_TOKEN,
+    'yash_bot_123',
+    'jewelbot_secure_token_2026'
+  ].filter(Boolean);
 
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+  if (mode === 'subscribe' && validTokens.includes(token)) {
     console.log('✅ Webhook verified successfully with Meta!');
     res.status(200).send(challenge);
   } else {
-    console.error('❌ Webhook verification failed! Invalid token.');
+    console.error(`❌ Webhook verification failed! Received token: "${token}"`);
     res.sendStatus(403);
   }
 });
