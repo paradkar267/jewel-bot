@@ -17,6 +17,7 @@ import {
   toggleShopStatusByAdmin,
   checkShopDiagnostics
 } from '@/app/actions/admin';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface ShopWithCounts {
   id: string;
@@ -60,8 +61,25 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
   
   // Diagnostics Modal State
   const [diagnosticShop, setDiagnosticShop] = useState<ShopWithCounts | null>(null);
-  const [diagnosticData, setDiagnosticData] = useState<any>(null);
+  const [diagnosticData, setDiagnosticData] = useState<any | null>(null);
   const [diagnosticLoading, setDiagnosticLoading] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    itemName?: string;
+    confirmText: string;
+    confirmVariant: 'danger' | 'warning' | 'primary';
+    onConfirm: () => Promise<void> | void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    confirmVariant: 'danger',
+    onConfirm: () => {}
+  });
 
   // Impersonating State
   const [impersonatingShopId, setImpersonatingShopId] = useState<string | null>(null);
@@ -113,10 +131,6 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
   // 🔑 One-Click Impersonation Login in New Tab
   const handleImpersonate = (shop: ShopWithCounts) => {
     if (!shop.owner_email) return;
-    if (!window.confirm(`🔑 Super Admin Access: Do you want to open "${shop.name}" dashboard in a NEW tab?`)) {
-      return;
-    }
-
     const impersonateUrl = `/api/auth/impersonate?email=${encodeURIComponent(shop.owner_email)}`;
     window.open(impersonateUrl, '_blank');
   };
@@ -280,50 +294,61 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
   // Handle Toggle Shop Status (Active vs Suspended)
   const handleToggleStatus = async (shopId: string, currentStatus: boolean | undefined) => {
     const targetStatus = currentStatus === false ? true : false;
-    const actionText = targetStatus ? "ACTIVATE" : "SUSPEND";
+    const actionText = targetStatus ? "Activate" : "Suspend";
     
-    if (!window.confirm(`Are you sure you want to ${actionText} this shop bot account?`)) {
-      return;
-    }
-
-    setIsSaving(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const res = await toggleShopStatusByAdmin(shopId, targetStatus);
-      if (res.success) {
-        setShops(prev => prev.map(s => s.id === shopId ? { ...s, is_active: targetStatus } : s));
-        setSuccess(res.message);
+    setConfirmModal({
+      isOpen: true,
+      title: `${actionText} Shop Account`,
+      message: `Are you sure you want to ${actionText.toLowerCase()} this shop bot account? ${targetStatus ? 'The bot and dashboard will be re-enabled.' : 'WhatsApp responses and dashboard access will be paused.'}`,
+      confirmText: actionText,
+      confirmVariant: targetStatus ? 'primary' : 'warning',
+      onConfirm: async () => {
+        setIsSaving(true);
+        setError('');
+        setSuccess('');
+        try {
+          const res = await toggleShopStatusByAdmin(shopId, targetStatus);
+          if (res.success) {
+            setShops(prev => prev.map(s => s.id === shopId ? { ...s, is_active: targetStatus } : s));
+            setSuccess(res.message);
+          }
+        } catch (err: any) {
+          setError(err.message || "Failed to update status.");
+        } finally {
+          setIsSaving(false);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to update status.");
-    } finally {
-      setIsSaving(false);
-    }
+    });
   };
 
   // Handle Delete Shop
   const handleDeleteShop = async (shopId: string, shopName: string) => {
-    if (!window.confirm(`CRITICAL WARNING: Are you sure you want to permanently delete "${shopName}"? This will delete all catalog items, customers, and history for this business.`)) {
-      return;
-    }
-
-    setIsDeleting(shopId);
-    setError('');
-    setSuccess('');
-
-    try {
-      const result = await deleteShopFromAdmin(shopId);
-      if (result.success) {
-        setShops(prev => prev.filter(s => s.id !== shopId));
-        setSuccess(`Account for "${shopName}" has been terminated.`);
+    setConfirmModal({
+      isOpen: true,
+      title: "Permanently Delete Shop",
+      message: `CRITICAL WARNING: This will permanently delete all catalog items, customer leads, and chat history for this business. This cannot be undone.`,
+      itemName: shopName,
+      confirmText: "Delete Shop",
+      confirmVariant: "danger",
+      onConfirm: async () => {
+        setIsDeleting(shopId);
+        setError('');
+        setSuccess('');
+        try {
+          const result = await deleteShopFromAdmin(shopId);
+          if (result.success) {
+            setShops(prev => prev.filter(s => s.id !== shopId));
+            setSuccess(`Account for "${shopName}" has been terminated.`);
+          }
+        } catch (err: any) {
+          setError(err.message || "Failed to terminate shop account.");
+        } finally {
+          setIsDeleting(null);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to terminate shop account.");
-    } finally {
-      setIsDeleting(null);
-    }
+    });
   };
 
   return (
@@ -1093,6 +1118,18 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
         </div>
       )}
 
+      {/* Modern Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        itemName={confirmModal.itemName}
+        confirmText={confirmModal.confirmText}
+        confirmVariant={confirmModal.confirmVariant}
+        isLoading={isSaving || !!isDeleting}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

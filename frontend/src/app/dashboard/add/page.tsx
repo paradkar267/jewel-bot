@@ -31,6 +31,7 @@ export default function AddProductPage() {
     price: '',
     url: ''
   });
+  const [saveError, setSaveError] = useState('');
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -81,7 +82,7 @@ export default function AddProductPage() {
 
       setAiNotice(`✨ AI detected: "${data.name || 'Jewelry piece'}" (${data.karat || '22K'} ${data.metal || 'Gold'} ${data.type || 'piece'}). Review or adjust details below.`);
     } catch (error) {
-      alert("AI analysis failed. Please fill details manually.");
+      setAiNotice("⚠️ AI analysis could not detect details. Please enter them manually below.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -90,6 +91,7 @@ export default function AddProductPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setSaveError('');
 
     try {
       // Use compressed image base64 directly to protect database from bloating
@@ -120,7 +122,7 @@ export default function AddProductPage() {
 
       router.push('/dashboard/catalog');
     } catch (error: any) {
-      alert("Error saving product: " + error.message);
+      setSaveError("Error saving product: " + error.message);
     } finally {
       setIsSaving(false);
     }
@@ -416,6 +418,14 @@ export default function AddProductPage() {
                   placeholder="https://yourstore.com/item/123" 
                 />
               </div>
+
+              {/* Error Banner */}
+              {saveError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2 mb-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-600" />
+                  <span>{saveError}</span>
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="pt-4">

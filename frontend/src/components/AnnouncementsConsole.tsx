@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Megaphone, Plus, Trash2, Bell, Sparkles, CheckCircle2, AlertCircle, Info, Tag } from "lucide-react";
 import { createAnnouncement, deleteAnnouncement } from "@/app/actions/admin-features";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface AnnouncementItem {
   id: string;
@@ -51,16 +52,22 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this announcement?")) return;
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-    const res = await deleteAnnouncement(id);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+
+    const res = await deleteAnnouncement(deleteId);
     if (res.success) {
-      setAnnouncements(announcements.filter(a => a.id !== id));
+      setAnnouncements(announcements.filter(a => a.id !== deleteId));
       setStatus({ type: "success", message: "Announcement deleted." });
     } else {
       setStatus({ type: "error", message: res.error || "Failed to delete" });
     }
+    setIsDeleting(false);
+    setDeleteId(null);
   };
 
   return (
@@ -171,7 +178,7 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
                 </div>
 
                 <button
-                  onClick={() => handleDelete(a.id)}
+                  onClick={() => setDeleteId(a.id)}
                   className="p-1.5 text-neutral-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-lg transition-colors cursor-pointer"
                   title="Delete Announcement"
                 >
@@ -186,6 +193,17 @@ export default function AnnouncementsConsole({ initialAnnouncements }: { initial
         )}
       </div>
 
+      {/* Modern Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Announcement"
+        message="Are you sure you want to delete this broadcast announcement? It will be removed from all shop owner dashboards."
+        confirmText="Delete Announcement"
+        confirmVariant="danger"
+        isLoading={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

@@ -23,7 +23,7 @@ export default function PriceDropAlertModal({ isOpen, onClose, currentGoldRate =
 
   const handleSendBroadcast = async () => {
     if (dropAmount <= 0) {
-      alert("New rate must be lower than previous rate to trigger a price drop alert!");
+      setResult({ success: false, message: "New rate must be lower than previous rate to trigger a price drop alert!" });
       return;
     }
 

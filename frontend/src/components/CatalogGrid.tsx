@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Edit3, Trash2, Layers, Tag, X, Upload, Loader2, AlertCircle, ExternalLink, Package, Scale, Sparkles, CheckSquare, Square, CheckCircle2 } from 'lucide-react';
 import { updateProduct, deleteProduct, deleteMultipleProducts } from '@/app/actions/product';
 import { compressImage } from '@/lib/imageCompression';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface Product {
   id: string;
@@ -28,6 +29,18 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    type: 'single' | 'bulk';
+    id?: string;
+    name?: string;
+    count?: number;
+  }>({
+    isOpen: false,
+    type: 'single'
+  });
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
   const [editForm, setEditForm] = useState({
     name: '',
     type: 'ring',
@@ -64,28 +77,66 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     }
   };
 
-  // Handle Bulk Delete
-  const handleBulkDelete = async () => {
+  // Open Bulk Delete Custom Modal
+  const openBulkDeleteModal = () => {
     if (selectedIds.length === 0) return;
+    setDeleteModal({
+      isOpen: true,
+      type: 'bulk',
+      count: selectedIds.length
+    });
+  };
 
-    const count = selectedIds.length;
-    if (!window.confirm(`Are you sure you want to delete ${count} selected jewelry items permanently from your showroom catalog and database?`)) {
-      return;
-    }
+  // Open Single Delete Custom Modal
+  const openDeleteModal = (id: string, name: string) => {
+    setDeleteModal({
+      isOpen: true,
+      type: 'single',
+      id,
+      name
+    });
+  };
 
-    setIsBulkDeleting(true);
-    try {
-      const res = await deleteMultipleProducts(selectedIds);
-      if (res.success) {
-        setProducts(prev => prev.filter(p => !selectedIds.includes(p.id)));
-        setSelectedIds([]);
-      } else {
-        alert("Failed to delete items.");
+  // Execute Confirmed Delete (Single or Bulk)
+  const handleConfirmDelete = async () => {
+    if (deleteModal.type === 'single' && deleteModal.id) {
+      const id = deleteModal.id;
+      const name = deleteModal.name || 'Item';
+      setIsDeleting(id);
+      try {
+        await deleteProduct(id);
+        setProducts(prev => prev.filter(p => p.id !== id));
+        setSelectedIds(prev => prev.filter(item => item !== id));
+        setToast({ message: `"${name}" removed from catalog.`, type: 'success' });
+        setTimeout(() => setToast(null), 4000);
+      } catch (err: any) {
+        setToast({ message: "Failed to delete: " + err.message, type: 'error' });
+        setTimeout(() => setToast(null), 4000);
+      } finally {
+        setIsDeleting(null);
+        setDeleteModal({ isOpen: false, type: 'single' });
       }
-    } catch (err: any) {
-      alert("Error deleting items: " + err.message);
-    } finally {
-      setIsBulkDeleting(false);
+    } else if (deleteModal.type === 'bulk') {
+      const count = selectedIds.length;
+      setIsBulkDeleting(true);
+      try {
+        const res = await deleteMultipleProducts(selectedIds);
+        if (res.success) {
+          setProducts(prev => prev.filter(p => !selectedIds.includes(p.id)));
+          setSelectedIds([]);
+          setToast({ message: `Successfully deleted ${count} jewelry items.`, type: 'success' });
+          setTimeout(() => setToast(null), 4000);
+        } else {
+          setToast({ message: "Failed to delete items.", type: 'error' });
+          setTimeout(() => setToast(null), 4000);
+        }
+      } catch (err: any) {
+        setToast({ message: "Error deleting items: " + err.message, type: 'error' });
+        setTimeout(() => setToast(null), 4000);
+      } finally {
+        setIsBulkDeleting(false);
+        setDeleteModal({ isOpen: false, type: 'bulk' });
+      }
     }
   };
 
@@ -214,23 +265,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
     }
   };
 
-  // Handle Delete Click
-  const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}" from your catalog?`)) {
-      return;
-    }
 
-    setIsDeleting(id);
-    try {
-      await deleteProduct(id);
-      setProducts(prev => prev.filter(p => p.id !== id));
-      setSelectedIds(prev => prev.filter(item => item !== id));
-    } catch (err: any) {
-      alert("Failed to delete product: " + err.message);
-    } finally {
-      setIsDeleting(null);
-    }
-  };
 
   return (
     <div>
@@ -264,7 +299,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
           {selectedIds.length > 0 && (
             <div className="flex items-center gap-2">
               <button
-                onClick={handleBulkDelete}
+                onClick={openBulkDeleteModal}
                 disabled={isBulkDeleting}
                 className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow-md transition-all border border-red-500/30 disabled:opacity-50 cursor-pointer"
               >
@@ -402,7 +437,7 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                     </button>
 
                     <button
-                      onClick={() => handleDelete(product.id, product.name)}
+                      onClick={() => openDeleteModal(product.id, product.name)}
                       disabled={isDeleting === product.id}
                       className="p-1.5 rounded-lg bg-neutral-100 hover:bg-red-50 hover:border-red-200 text-neutral-600 hover:text-red-600 transition-all border border-neutral-200 cursor-pointer"
                       title="Delete Item"
@@ -700,6 +735,37 @@ export default function CatalogGrid({ initialProducts }: { initialProducts: Prod
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.type === 'bulk' ? `Delete ${deleteModal.count} Items` : "Delete Jewelry Item"}
+        message={
+          deleteModal.type === 'bulk'
+            ? `Are you sure you want to permanently delete these ${deleteModal.count} jewelry items from your showroom catalog and database? This action cannot be undone.`
+            : `Are you sure you want to delete this jewelry piece from your showroom catalog? This action cannot be undone.`
+        }
+        itemName={deleteModal.name}
+        confirmText={deleteModal.type === 'bulk' ? `Delete ${deleteModal.count} Items` : "Delete"}
+        confirmVariant="danger"
+        isLoading={isBulkDeleting || !!isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, type: 'single' })}
+      />
+
+      {/* Modern Floating Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 duration-300">
+          <div className={`px-4 py-3 rounded-xl shadow-xl border text-xs font-bold flex items-center gap-2.5 ${
+            toast.type === 'success'
+              ? 'bg-neutral-950 text-white border-neutral-800'
+              : 'bg-red-600 text-white border-red-500'
+          }`}>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span>{toast.message}</span>
           </div>
         </div>
       )}
