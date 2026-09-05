@@ -195,6 +195,40 @@ async function downloadImageAsBase64(mediaId, shopAccessToken) {
   return { base64, contentType: mimeType };
 }
 
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+
+async function callGeminiWithFallback(contents, generationConfig = { responseMimeType: "application/json" }) {
+  const apiKey = getGeminiKey();
+  let lastErr = null;
+
+  for (const model of GEMINI_MODELS) {
+    try {
+      console.log(`   🤖 Querying Gemini model: ${model}...`);
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          contents,
+          generationConfig
+        },
+        { headers: { 'Content-Type': 'application/json' }, timeout: 25000 }
+      );
+
+      const candidate = response.data?.candidates?.[0];
+      if (candidate?.content?.parts?.[0]?.text) {
+        console.log(`   ✅ Success with model: ${model}`);
+        return candidate.content.parts[0].text.trim();
+      }
+    } catch (err) {
+      const status = err.response ? err.response.status : err.code;
+      const errMsg = err.response ? JSON.stringify(err.response.data) : err.message;
+      console.warn(`   ⚠️ Gemini model ${model} failed (${status}):`, errMsg);
+      lastErr = err;
+    }
+  }
+
+  throw lastErr || new Error("All Gemini models failed to respond.");
+}
+
 // ── Step 2: Gemini Vision API ───────
 async function analyzeJewelryWithGemini(base64Image, mimeType, catalog) {
   // Strip heavy base64 data URLs from prompt to avoid blowing up JSON payload
@@ -242,31 +276,18 @@ Schema to return:
 
 IMPORTANT: If the image does NOT contain any jewelry item at all, set is_jewelry to false.`;
 
-  const apiKey = getGeminiKey();
-
-  const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+  const rawText = await callGeminiWithFallback([
     {
-      contents: [{
-        parts: [
-          { text: prompt },
-          {
-            inlineData: { mimeType: mimeType, data: base64Image }
-          }
-        ]
-      }],
-      generationConfig: { responseMimeType: "application/json" }
-    },
-    { headers: { 'Content-Type': 'application/json' } }
-  );
+      parts: [
+        { text: prompt },
+        {
+          inlineData: { mimeType: mimeType, data: base64Image }
+        }
+      ]
+    }
+  ]);
 
-  const candidate = response.data?.candidates?.[0];
-  if (!candidate || !candidate.content?.parts?.[0]?.text) {
-    console.error("Gemini response missing candidate parts:", JSON.stringify(response.data));
-    throw new Error(`Gemini response empty or blocked. FinishReason: ${candidate?.finishReason || 'unknown'}`);
-  }
-
-  let raw = candidate.content.parts[0].text.trim();
+  let raw = rawText;
   const firstBrace = raw.indexOf('{');
   const lastBrace = raw.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1) {
@@ -306,25 +327,13 @@ Return ONLY a valid JSON object matching this schema:
 
 If the user message is general chatter or not looking for jewelry products, set is_search_query to false and matching_product_ids to [].`;
 
-  const apiKey = getGeminiKey();
-
-  const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+  const rawText = await callGeminiWithFallback([
     {
-      contents: [{
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: { responseMimeType: "application/json" }
-    },
-    { headers: { 'Content-Type': 'application/json' } }
-  );
+      parts: [{ text: prompt }]
+    }
+  ]);
 
-  const candidate = response.data?.candidates?.[0];
-  if (!candidate || !candidate.content?.parts?.[0]?.text) {
-    throw new Error(`Gemini text search empty or blocked. FinishReason: ${candidate?.finishReason || 'unknown'}`);
-  }
-
-  let raw = candidate.content.parts[0].text.trim();
+  let raw = rawText;
   const firstBrace = raw.indexOf('{');
   const lastBrace = raw.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1) {
