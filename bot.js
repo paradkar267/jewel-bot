@@ -344,150 +344,56 @@ If the user message is general chatter or not looking for jewelry products, set 
   return JSON.parse(raw);
 }
 
-// ── Step 3: Format Luxury WhatsApp reply ───────
-function formatWhatsAppReply(analysis, matchingData, promoBanner, shopName, storeAddress) {
+// ── Step 3: Format WhatsApp reply ───────
+function formatWhatsAppReply(analysis, matchingData, promoBanner) {
   const { exactMatch, suggestions } = matchingData;
 
   if (!analysis.is_jewelry) {
-    return `⚠️ *No Jewelry Detected*\n\n` +
-      `Humari AI ko is photo me koi jewelry piece (haar, anguthi, jhumka, bracelet, pendant) nahi mila.\n\n` +
-      `📸 *Kripya kisi jewelry design ki saaf photo ya Instagram screenshot bheinjein!* ✨`;
+    return `⚠️ *No Jewelry Detected*\n\nHumari AI ko is photo me koi jewelry piece (har, anguthi, jhumka, bracelet) nahi mila. Kripya jewelry ki saaf photo ya screenshot bheinjein! ✨`;
   }
 
   const typeEmoji = {
-    ring: '💍',
-    necklace: '📿',
-    earring: '👂',
-    bracelet: '⌚',
-    pendant: '🔮',
-    anklet: '🦶',
-    bangle: '🔗',
-    other: '💎'
+    ring: '💍', necklace: '📿', earring: '👂', bracelet: '⌚',
+    pendant: '🔮', anklet: '🦶', bangle: '🔗', other: '✨'
   };
 
-  const emoji = typeEmoji[analysis.type] || '💎';
-  const jewelryType = (analysis.type || 'Jewelry').toUpperCase();
+  const emoji = typeEmoji[analysis.type] || '✨';
   const occasion = analysis.occasion
     ? analysis.occasion.charAt(0).toUpperCase() + analysis.occasion.slice(1)
-    : 'All Occasions';
+    : '—';
 
-  let reply = `✨ *AI JEWELRY SCAN & MATCH* ✨\n`;
-  reply += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-  // AI Visual Insights Section
-  reply += `🔍 *Design Breakdown:*\n`;
-  reply += `${emoji} *Type:* ${jewelryType} ${analysis.subtype ? `• ${analysis.subtype}` : ''}\n`;
-  if (analysis.metal || analysis.metal_purity) {
-    const metalStr = [analysis.metal_purity, analysis.metal].filter(Boolean).map(s => s.toUpperCase()).join(' ');
-    reply += `✨ *Metal:* ${metalStr}\n`;
-  }
-  if (analysis.primary_gemstone || (analysis.gemstones && analysis.gemstones.length > 0)) {
-    const stones = analysis.primary_gemstone || analysis.gemstones.join(', ');
-    reply += `💎 *Stones:* ${stones}\n`;
-  }
-  reply += `👗 *Ideal For:* ${occasion}\n`;
-  if (analysis.design_details) {
-    reply += `📝 *AI Note:* _${analysis.design_details}_\n`;
-  }
-
-  // Best Match Section
+  let reply = `${emoji} *Jewelry Details* ${emoji}\n\n`;
+  reply += `📝 *Info:* ${analysis.design_details || 'Beautiful jewelry piece.'}\n`;
+  reply += `👗 *Best For:* ${occasion}\n\n`;
+  
   if (exactMatch) {
+    reply += `🛍️ *Best Matching Showroom Item (90%+ Similar)!*\n`;
+    reply += `*🏷️ Name:* ${exactMatch.name}\n`;
     const priceStr = exactMatch.price ? `₹${Number(exactMatch.price).toLocaleString('en-IN')}` : 'Price on request';
-    const karatStr = exactMatch.karat ? `${exactMatch.karat}` : '';
-    const metalStr = exactMatch.metal ? `${exactMatch.metal.toUpperCase()}` : '';
-    const weightStr = exactMatch.weight_grams ? ` • ${Number(exactMatch.weight_grams)}g` : '';
-    const specStr = [karatStr, metalStr].filter(Boolean).join(' ') + weightStr;
-
-    reply += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
-    reply += `🌟 *SHOWROOM BEST MATCH (95%+ Similar)*\n`;
-    reply += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-    reply += `🏷️ *${exactMatch.name}*\n`;
-    reply += `💰 *Price:* *${priceStr}*\n`;
-    if (specStr.trim()) {
-      reply += `⚖️ *Purity & Weight:* ${specStr}\n`;
-    }
-    reply += `🟢 *Status:* In Stock (Live Vault)\n`;
-    if (exactMatch.url) {
-      reply += `\n🔗 *View & Order Online:*\n${exactMatch.url}\n`;
-    }
+    reply += `*💰 Price:* ${priceStr}\n`;
+    if (exactMatch.url) reply += `*🔗 Buy Here:* ${exactMatch.url}\n`;
+    reply += `\n`;
   } else {
-    reply += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
-    reply += `✨ *SHOWROOM COLLECTION RECOMMENDATIONS*\n`;
-    reply += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    reply += `✨ *Showing Best Matching Designs From Our Catalog:*\n\n`;
   }
 
-  // Similar items section
   if (suggestions && suggestions.length > 0) {
-    reply += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
-    reply += `💎 *Similar Designs in Showroom:*\n\n`;
-    const numEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
+    reply += `💎 *90% Similar Showroom Collection Items:*\n`;
     suggestions.forEach((item, idx) => {
       const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
-      const kStr = item.karat ? ` (${item.karat})` : '';
-      const numIcon = numEmojis[idx] || `•`;
-      reply += `${numIcon} *${item.name}*${kStr}\n`;
-      reply += `   💰 *${pStr}*\n`;
-      if (item.url) {
-        reply += `   🔗 ${item.url}\n`;
-      }
-      reply += `\n`;
+      reply += `${idx + 1}. *${item.name}* — ${pStr}\n`;
+      if (item.url) reply += `   🔗 ${item.url}\n`;
     });
   }
 
-  // Special Offer Banner
-  if (promoBanner && promoBanner.trim()) {
-    reply += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    reply += `🎁 *Special Offer:*\n${promoBanner.trim()}\n\n`;
+  if (promoBanner) {
+    reply += `\n🎁 *Special Offer:* ${promoBanner}\n`;
   }
-
-  // Showroom Visit & Call to Action
-  if (storeAddress && storeAddress.trim()) {
-    reply += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    reply += `📍 *Showroom Location:*\n${storeAddress.trim()}\n\n`;
-  }
-
-  reply += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  reply += `💬 _Reply with any question or custom order request!_`;
 
   return reply;
 }
 
-// ── Step 4a: Send WhatsApp image message ───────
-async function sendWhatsAppImage(to, imageUrl, caption, shopPhoneNumberId, shopAccessToken) {
-  const senderId = shopPhoneNumberId || process.env.META_PHONE_NUMBER_ID;
-  const accessToken = shopAccessToken || process.env.META_ACCESS_TOKEN;
-
-  if (!senderId || !accessToken || !imageUrl) return false;
-
-  try {
-    await axios.post(
-      `https://graph.facebook.com/v20.0/${senderId}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: to,
-        type: "image",
-        image: {
-          link: imageUrl,
-          caption: caption || undefined
-        }
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    console.log(`   📸 WhatsApp product image sent to ${to}`);
-    return true;
-  } catch (err) {
-    const errorDetails = err.response ? JSON.stringify(err.response.data) : err.message;
-    console.warn(`   ⚠️ WhatsApp image send skipped (will send text):`, errorDetails);
-    return false;
-  }
-}
-
-// ── Step 4b: Send WhatsApp text reply ───────
+// ── Step 4: Send WhatsApp reply ───────
 async function sendWhatsAppReply(to, body, shopPhoneNumberId, shopAccessToken) {
   const senderId = shopPhoneNumberId || process.env.META_PHONE_NUMBER_ID;
   const accessToken = shopAccessToken || process.env.META_ACCESS_TOKEN;
@@ -700,15 +606,9 @@ app.post('/webhook', async (req, res) => {
         session.dailyImageCount++;
 
         stepProgress = 'formatting_reply';
-        const replyMessage = formatWhatsAppReply(analysis, matchingData, session.promoBanner, session.shopName, session.storeAddress);
+        const replyMessage = formatWhatsAppReply(analysis, matchingData, session.promoBanner);
 
         stepProgress = 'sending_reply';
-        // If exact match has a public image URL, send product photo first
-        if (exactMatch && exactMatch.image_url && exactMatch.image_url.startsWith('http')) {
-          const caption = `🌟 *Showroom Best Match:* ${exactMatch.name}\n💰 *Price:* ${exactMatch.price ? `₹${Number(exactMatch.price).toLocaleString('en-IN')}` : 'Price on request'}`;
-          await sendWhatsAppImage(phone, exactMatch.image_url, caption, session.metaPhoneNumberId, session.metaAccessToken);
-        }
-
         await sendWhatsAppReply(phone, replyMessage, session.metaPhoneNumberId, session.metaAccessToken);
         console.log(`   ✅ Analysis reply sent to ${phone} (Updated Count: ${session.dailyImageCount}/${MAX_DAILY_IMAGES})`);
       } catch (err) {
@@ -751,31 +651,17 @@ app.post('/webhook', async (req, res) => {
             .filter(Boolean);
 
           if (matchedProducts.length > 0) {
-            // Send top product image if available
-            const topMatch = matchedProducts[0];
-            if (topMatch && topMatch.image_url && topMatch.image_url.startsWith('http')) {
-              const pStr = topMatch.price ? `₹${Number(topMatch.price).toLocaleString('en-IN')}` : 'Price on request';
-              await sendWhatsAppImage(phone, topMatch.image_url, `🌟 *${topMatch.name}* • ${pStr}`, session.metaPhoneNumberId, session.metaAccessToken);
-            }
-
-            let reply = `🔍 *AI SEARCH RESULTS: ${searchResult.search_summary || 'Catalog Matching'}*\n`;
-            reply += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+            let reply = `🔍 *${searchResult.search_summary || 'Catalog Search Results'}*\n\n`;
             matchedProducts.forEach((item, idx) => {
               const pStr = item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Price on request';
-              const kStr = item.karat ? ` (${item.karat})` : '';
-              reply += `💎 *${idx + 1}. ${item.name}*${kStr}\n`;
-              reply += `   💰 *Price:* *${pStr}*\n`;
-              if (item.url) reply += `   🔗 *View Details:* ${item.url}\n`;
+              reply += `${idx + 1}. *${item.name}*\n   💰 Price: ${pStr}\n`;
+              if (item.url) reply += `   🔗 Link: ${item.url}\n`;
               reply += `\n`;
             });
-            reply += `━━━━━━━━━━━━━━━━━━━━━\n`;
-            if (session.promoBanner && session.promoBanner.trim()) {
-              reply += `🎁 *Special Offer:* ${session.promoBanner.trim()}\n\n`;
+            reply += `✨ _Showroom Catalog items matched for your query._\n`;
+            if (session.promoBanner) {
+              reply += `\n🎁 *Special Offer:* ${session.promoBanner}\n`;
             }
-            if (session.storeAddress && session.storeAddress.trim()) {
-              reply += `📍 *Showroom Location:* ${session.storeAddress.trim()}\n\n`;
-            }
-            reply += `💬 _Reply with any design name for more details or custom order inquiries!_`;
             await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
             return;
           }
@@ -789,24 +675,17 @@ app.post('/webhook', async (req, res) => {
       if (session.customGreeting && session.customGreeting.trim() !== '') {
         reply = `${session.customGreeting.trim()}\n\n`;
       } else {
-        reply = `👋 *Welcome to ${session.shopName || 'our Jewelry Store'}!* ✨\n`;
-        reply += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-        reply += `I am your *24/7 AI Jewelry Personal Stylist* 💎\n\n`;
-        reply += `📸 *Send any Jewelry Photo or Instagram Screenshot* to search our live catalog instantly!\n\n`;
-        reply += `💬 Or type what you are looking for:\n`;
-        reply += `• _"Show me diamond solitaire rings under 60k"_\n`;
-        reply += `• _"Do you have 22K gold bridal choker haar?"_\n`;
-        reply += `• _"Show me traditional jhumka earrings"_\n\n`;
+        reply = `👋 Hello! Welcome to *${session.shopName || 'our Jewelry Store'}*! 💎\n\n`;
+        reply += `📸 *Send any Jewelry Image or Instagram Screenshot* to search our live catalog!\n\n`;
+        reply += `💬 Or type what you are looking for (e.g. *"Show me gold rings under 50k"* or *"Do you have silver bangles?"*).\n\n`;
       }
 
-      if (session.promoBanner && session.promoBanner.trim()) {
-        reply += `🎁 *Special Offer:* ${session.promoBanner.trim()}\n\n`;
+      if (session.storeAddress) {
+        reply += `📍 *Showroom Address:*\n${session.storeAddress}\n\n`;
       }
-      if (session.storeAddress && session.storeAddress.trim()) {
-        reply += `📍 *Showroom Location:*\n${session.storeAddress.trim()}\n\n`;
+      if (session.promoBanner) {
+        reply += `🎁 *Special Offer:*\n${session.promoBanner}\n`;
       }
-      reply += `━━━━━━━━━━━━━━━━━━━━━\n`;
-      reply += `_How may I assist you with your jewelry search today?_ 🛍️`;
 
       await sendWhatsAppReply(phone, reply, session.metaPhoneNumberId, session.metaAccessToken);
     }
