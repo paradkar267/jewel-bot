@@ -25,6 +25,7 @@ interface ShopWithCounts {
   whatsapp_number: string | null;
   owner_email: string | null;
   meta_phone_number_id: string | null;
+  meta_waba_id?: string | null;
   meta_access_token?: string | null;
   store_address?: string | null;
   custom_greeting?: string | null;
@@ -99,6 +100,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
     ownerEmail: '',
     password: '',
     metaPhoneNumberId: '',
+    metaWabaId: '',
     metaAccessToken: '',
     storeAddress: '',
     customGreeting: '',
@@ -110,6 +112,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
     whatsappNumber: '',
     ownerEmail: '',
     metaPhoneNumberId: '',
+    metaWabaId: '',
     metaAccessToken: '',
     storeAddress: '',
     customGreeting: '',
@@ -172,6 +175,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
         ownerEmail: addForm.ownerEmail,
         password: addForm.password || undefined,
         metaPhoneNumberId: addForm.metaPhoneNumberId || undefined,
+        metaWabaId: addForm.metaWabaId || undefined,
         metaAccessToken: addForm.metaAccessToken || undefined,
         storeAddress: addForm.storeAddress || undefined,
         customGreeting: addForm.customGreeting || undefined,
@@ -181,6 +185,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
       if (result.success && result.shop) {
         const newShop: ShopWithCounts = {
           ...result.shop,
+          meta_waba_id: (result.shop as any).meta_waba_id || null,
           meta_access_token: (result.shop as any).meta_access_token || null,
           store_address: (result.shop as any).store_address || null,
           custom_greeting: (result.shop as any).custom_greeting || null,
@@ -195,6 +200,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
           ownerEmail: '',
           password: '',
           metaPhoneNumberId: '',
+          metaWabaId: '',
           metaAccessToken: '',
           storeAddress: '',
           customGreeting: '',
@@ -217,6 +223,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
       whatsappNumber: shop.whatsapp_number || '',
       ownerEmail: shop.owner_email || '',
       metaPhoneNumberId: shop.meta_phone_number_id || '',
+      metaWabaId: shop.meta_waba_id || '',
       metaAccessToken: shop.meta_access_token || '',
       storeAddress: shop.store_address || '',
       customGreeting: shop.custom_greeting || '',
@@ -249,6 +256,7 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
           whatsapp_number: result.shop.whatsapp_number,
           owner_email: result.shop.owner_email,
           meta_phone_number_id: result.shop.meta_phone_number_id,
+          meta_waba_id: (result.shop as any).meta_waba_id || null,
           meta_access_token: (result.shop as any).meta_access_token || null,
           store_address: (result.shop as any).store_address || null,
           custom_greeting: (result.shop as any).custom_greeting || null,
@@ -717,6 +725,20 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                     )}
                   </div>
 
+                  {/* WhatsApp Business Account (WABA ID) */}
+                  <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-xs">
+                    <span className="text-neutral-700 font-medium">WhatsApp Business Account (WABA ID)</span>
+                    {diagnosticData.hasWabaId ? (
+                      <span className="text-emerald-700 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Linked ⚡
+                      </span>
+                    ) : (
+                      <span className="text-amber-705 font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" /> Not Set
+                      </span>
+                    )}
+                  </div>
+
                   {/* Meta Access Token */}
                   <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-xs">
                     <span className="text-neutral-700 font-medium">Meta System Access Token</span>
@@ -855,6 +877,18 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                 </div>
 
                 <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">WhatsApp Business Account ID (WABA ID)</label>
+                  <input
+                    type="text"
+                    value={addForm.metaWabaId}
+                    onChange={(e) => setAddForm({ ...addForm, metaWabaId: e.target.value })}
+                    placeholder="e.g. 1852031329115177"
+                    className="w-full bg-white border border-neutral-255 rounded-xl px-3.5 py-2.5 text-xs text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-black/35 font-mono"
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">From Meta App Dashboard ➔ WhatsApp ➔ API Setup / Step 1</p>
+                </div>
+
+                <div>
                   <label className="block text-xs font-semibold text-neutral-700 mb-1">Meta Permanent Access Token</label>
                   <textarea
                     rows={2}
@@ -985,6 +1019,18 @@ export default function AdminConsole({ stats, initialShops }: AdminConsoleProps)
                     onChange={(e) => setEditForm({ ...editForm, metaPhoneNumberId: e.target.value })}
                     className="w-full bg-white border border-neutral-250 rounded-xl px-3.5 py-2.5 text-xs text-neutral-900 focus:outline-none focus:border-black/35 font-mono"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">WhatsApp Business Account ID (WABA ID)</label>
+                  <input
+                    type="text"
+                    value={editForm.metaWabaId}
+                    onChange={(e) => setEditForm({ ...editForm, metaWabaId: e.target.value })}
+                    placeholder="e.g. 1852031329115177"
+                    className="w-full bg-white border border-neutral-250 rounded-xl px-3.5 py-2.5 text-xs text-neutral-900 focus:outline-none focus:border-black/35 font-mono"
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">From Meta App Dashboard ➔ WhatsApp ➔ API Setup / Step 1</p>
                 </div>
 
                 <div>

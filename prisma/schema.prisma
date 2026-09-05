@@ -13,6 +13,7 @@ model Shop {
   owner_email                    String?   @unique
   password                       String?   // Hashed password for NextAuth
   meta_phone_number_id           String?
+  meta_waba_id                   String?   // WhatsApp Business Account ID (WABA ID)
   meta_access_token              String?
   custom_greeting                String?
   store_address                  String?

@@ -4,8 +4,26 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import bcrypt from 'bcryptjs';
+import axios from 'axios';
 
 const ADMIN_EMAIL = 'bizleap1@gmail.com';
+
+async function autoSubscribeWaba(wabaId?: string | null, accessToken?: string | null) {
+  if (!wabaId || !accessToken) return;
+  const cleanWaba = wabaId.trim();
+  const cleanToken = accessToken.trim();
+  if (!cleanWaba || !cleanToken) return;
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v20.0/${cleanWaba}/subscribed_apps`,
+      {},
+      { headers: { Authorization: `Bearer ${cleanToken}` } }
+    );
+    console.log(`✅ Auto-subscribed WABA ${cleanWaba} to App!`);
+  } catch (err: any) {
+    console.warn(`⚠️ Could not auto-subscribe WABA ${cleanWaba}:`, err.response?.data?.error?.message || err.message);
+  }
+}
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
@@ -79,6 +97,7 @@ export async function createShopFromAdmin(data: {
   ownerEmail: string;
   password?: string;
   metaPhoneNumberId?: string;
+  metaWabaId?: string;
   metaAccessToken?: string;
   storeAddress?: string;
   customGreeting?: string;
@@ -116,13 +135,17 @@ export async function createShopFromAdmin(data: {
       owner_email: data.ownerEmail.trim(),
       password: hashedPassword,
       meta_phone_number_id: data.metaPhoneNumberId?.trim() || null,
+      meta_waba_id: data.metaWabaId?.trim() || null,
       meta_access_token: data.metaAccessToken?.trim() || null,
       store_address: data.storeAddress?.trim() || null,
       custom_greeting: data.customGreeting?.trim() || null,
       promo_banner: data.promoBanner?.trim() || null,
       is_active: true
-    }
+    } as any
   });
+
+  // Auto-subscribe WABA to Meta App if credentials provided
+  await autoSubscribeWaba(data.metaWabaId, data.metaAccessToken);
 
   return {
     success: true,
@@ -137,6 +160,7 @@ export async function updateShopMeta(
     whatsappNumber: string;
     ownerEmail: string;
     metaPhoneNumberId?: string;
+    metaWabaId?: string;
     metaAccessToken?: string;
     storeAddress?: string;
     customGreeting?: string;
@@ -173,12 +197,16 @@ export async function updateShopMeta(
       whatsapp_number: data.whatsappNumber.trim(),
       owner_email: data.ownerEmail.trim(),
       meta_phone_number_id: data.metaPhoneNumberId?.trim() || null,
+      meta_waba_id: data.metaWabaId?.trim() || null,
       meta_access_token: data.metaAccessToken?.trim() || null,
       store_address: data.storeAddress?.trim() || null,
       custom_greeting: data.customGreeting?.trim() || null,
       promo_banner: data.promoBanner?.trim() || null,
-    }
+    } as any
   });
+
+  // Auto-subscribe WABA to Meta App if credentials provided
+  await autoSubscribeWaba(data.metaWabaId, data.metaAccessToken);
 
   return {
     success: true,
@@ -249,6 +277,7 @@ export async function checkShopDiagnostics(shopId: string) {
   if (!shop) throw new Error("Shop not found");
 
   const hasPhoneId = Boolean(shop.meta_phone_number_id && shop.meta_phone_number_id.trim());
+  const hasWabaId = Boolean((shop as any).meta_waba_id && (shop as any).meta_waba_id.trim());
   const hasToken = Boolean(shop.meta_access_token && shop.meta_access_token.trim());
   const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY);
 
@@ -265,6 +294,7 @@ export async function checkShopDiagnostics(shopId: string) {
     shopId: shop.id,
     shopName: shop.name,
     hasPhoneId,
+    hasWabaId,
     hasToken,
     hasGeminiKey,
     metaStatus,
