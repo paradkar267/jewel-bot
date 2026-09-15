@@ -152,7 +152,7 @@ let lastBotError = null;
 
 // Safe Gemini API key resolver (env variable with safe encoded fallback)
 function getGeminiKey() {
-  return process.env.GEMINI_API_KEY || Buffer.from('QVEuQWI4Uk42TC1jMG9QUFhHV0NzcVFjWmtFTlFwejlQNjk2YWNIOUdickl1MU8tUzZPSEE=', 'base64').toString('utf8');
+  return process.env.GEMINI_API_KEY || Buffer.from('QVEuQWI4Uk42THpjeWlQT2pGSWI3NDg1cldMR19QT0JLbHlRbVBDWG9pRktyalhHbC1ma2c=', 'base64').toString('utf8');
 }
 
 // ── Step 1: Download image from Meta ───────
