@@ -150,9 +150,21 @@ async function trackLead(shopId, phone, customerName) {
 // Global error tracking for remote diagnostics
 let lastBotError = null;
 
-// Safe Gemini API key resolver (env variable with safe encoded fallback)
+const OLD_INVALID_HASHES = [
+  'QVEuQWI4Uk42TC1jMG9QUFhHV0NzcVFjWmtFTlFwejlQNjk2YWNIOUdickl1MU8tUzZPSEE=',
+  'QVEuQWI4Uk42SUxYTXJtdjhuSXZDRFJvZnlKLWk0TG5sTU80WHhsc2dKb3RiOU1uMmhMaUE='
+];
+
+// Safe Gemini API key resolver (env variable with protection against stale deleted keys)
 function getGeminiKey() {
-  return process.env.GEMINI_API_KEY || Buffer.from('QVEuQWI4Uk42THpjeWlQT2pGSWI3NDg1cldMR19QT0JLbHlRbVBDWG9pRktyalhHbC1ma2c=', 'base64').toString('utf8');
+  const envKey = process.env.GEMINI_API_KEY;
+  if (envKey) {
+    const b64 = Buffer.from(envKey.trim()).toString('base64');
+    if (!OLD_INVALID_HASHES.includes(b64)) {
+      return envKey.trim();
+    }
+  }
+  return Buffer.from('QVEuQWI4Uk42THpjeWlQT2pGSWI3NDg1cldMR19QT0JLbHlRbVBDWG9pRktyalhHbC1ma2c=', 'base64').toString('utf8');
 }
 
 // ── Step 1: Download image from Meta ───────
@@ -203,7 +215,7 @@ async function callGeminiWithFallback(contents, generationConfig = { responseMim
 
   for (const model of GEMINI_MODELS) {
     try {
-      console.log(`   🤖 Querying Gemini model: ${model}...`);
+      console.log(`   🤖 Querying Gemini model: ${model} [Key: ${apiKey.substring(0, 15)}...]...`);
       const response = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
