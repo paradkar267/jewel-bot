@@ -195,7 +195,7 @@ async function downloadImageAsBase64(mediaId, shopAccessToken) {
   return { base64, contentType: mimeType };
 }
 
-const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
 
 async function callGeminiWithFallback(contents, generationConfig = { responseMimeType: "application/json" }) {
   const apiKey = getGeminiKey();
